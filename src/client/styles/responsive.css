@@ -1,0 +1,52 @@
+/* ─── Breakpoints ─────────────────────────────────────────── */
+/* sm: 576px  md: 768px  lg: 992px  xl: 1200px  2xl: 1400px  */
+
+/* Product grids */
+.products-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 576px) {
+  .container { padding-inline: var(--space-6); }
+}
+
+@media (min-width: 768px) {
+  .container { padding-inline: var(--space-8); }
+
+  .products-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 992px) {
+  .products-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 1200px) {
+  .container { padding-inline: var(--space-10); }
+  .products-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* ─── Responsive Helpers ──────────────────────────────────── */
+.hide-mobile  { display: none; }
+.hide-tablet  { display: block; }
+.hide-desktop { display: block; }
+
+@media (min-width: 768px) {
+  .hide-mobile  { display: block; }
+  .hide-tablet  { display: none; }
+}
+
+@media (min-width: 992px) {
+  .hide-tablet  { display: block; }
+  .hide-desktop { display: none; }
+}
+
+/* ─── Mobile Nav ──────────────────────────────────────────── */
+.mobile-only { display: block; }
+.desktop-only { display: none; }
+
+@media (min-width: 992px) {
+  .mobile-only  { display: none; }
+  .desktop-only { display: flex; }
+}
