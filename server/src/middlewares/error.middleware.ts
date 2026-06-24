@@ -43,7 +43,9 @@ export const errorHandler = (
     return
   }
 
-  logger.error('Unhandled error', { error: err, path: req.path, method: req.method })
+  const message = err instanceof Error ? err.message : String(err)
+  const stack = err instanceof Error ? err.stack : undefined
+  logger.error('Unhandled error', { message, stack, path: req.path, method: req.method })
 
   res.status(500).json({ success: false, message: 'Internal server error' } satisfies ApiResponse)
 }

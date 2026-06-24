@@ -8,8 +8,9 @@ import { globalLimiter } from './middlewares/rateLimiter.middleware.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
 import { API_PREFIX } from '../../src/shared/constants/index.js'
 
-// Route imports (stubs — will be wired in later phases)
-// import authRoutes from './routes/auth.routes.js'
+import authRoutes    from './routes/auth.routes.js'
+import profileRoutes from './routes/profile.routes.js'
+import productRoutes from './routes/product.routes.js'
 
 const app = express()
 
@@ -39,7 +40,9 @@ app.get('/health', (_req, res) => {
 })
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-// app.use(`${API_PREFIX}/auth`, authRoutes)
+app.use(`${API_PREFIX}/auth`,     authRoutes)
+app.use(`${API_PREFIX}/profile`,  profileRoutes)
+app.use(`${API_PREFIX}/products`, productRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFound)

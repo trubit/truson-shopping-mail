@@ -7,7 +7,7 @@ interface AuthState {
   accessToken: string | null
   isAuthenticated: boolean
   setAuth: (user: IUser, token: string) => void
-  updateUser: (user: Partial<IUser>) => void
+  updateUser: (partial: Partial<IUser>) => void
   clearAuth: () => void
 }
 

@@ -1,3 +1,5 @@
+export type UserRole = 'user' | 'seller' | 'admin'
+
 export interface TokenPayload {
   userId: string
   email: string
@@ -11,16 +13,17 @@ export interface AuthTokens {
   refreshToken: string
 }
 
-export type UserRole = 'buyer' | 'seller' | 'admin'
-
 export interface LoginCredentials {
   email: string
   password: string
 }
 
 export interface RegisterCredentials {
-  name: string
+  firstName: string
+  lastName: string
+  username: string
   email: string
   password: string
+  phoneNumber?: string
   role?: UserRole
 }

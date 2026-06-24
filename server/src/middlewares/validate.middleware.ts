@@ -1,22 +1,20 @@
 import type { Request, Response, NextFunction } from 'express'
-import { ZodSchema, ZodError } from 'zod'
+import { z } from 'zod'
 import { AppError } from './error.middleware.js'
 
 type ValidateTarget = 'body' | 'query' | 'params'
 
 export const validate =
-  (schema: ZodSchema, target: ValidateTarget = 'body') =>
+  (schema: z.ZodTypeAny, target: ValidateTarget = 'body') =>
   (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      req[target] = schema.parse(req[target])
-      next()
-    } catch (err) {
-      if (err instanceof ZodError) {
-        const errors = Object.fromEntries(
-          err.errors.map((e) => [e.path.join('.'), e.message]),
-        )
-        return next(new AppError('Validation failed', 422, errors))
-      }
-      next(err)
+    const result = schema.safeParse(req[target])
+    if (result.success) {
+      req[target] = result.data
+      return next()
     }
+    const issues = result.error.issues ?? result.error.errors ?? []
+    const errors = Object.fromEntries(
+      issues.map((e: { path: (string | number)[]; message: string }) => [e.path.join('.') || 'value', e.message]),
+    )
+    next(new AppError('Validation failed', 422, errors))
   }

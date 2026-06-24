@@ -1,42 +1,62 @@
+import type { ProductCategory } from '../constants/index.js'
+import type { IPublicUser } from './user.types.js'
+
+export type ProductStatus = 'pending' | 'active' | 'blocked'
+
 export interface IProduct {
   _id: string
-  name: string
+  title: string
   description: string
   price: number
-  comparePrice?: number
-  category: string
-  subcategory?: string
-  brand?: string
+  discountPrice?: number
+  discountPercent?: number
   images: string[]
-  stock: number
+  category: ProductCategory
+  subCategory?: string
+  brand?: string
+  stockQuantity: number
   sku: string
-  seller: string
-  rating: number
-  reviewCount: number
+  ratingsAverage: number
+  ratingsCount: number
+  sellerId: string | IPublicUser
   tags: string[]
   isActive: boolean
+  status: ProductStatus
   isFeatured: boolean
+  views: number
   createdAt: string
   updatedAt: string
 }
 
-export interface IProductFilters {
+export interface IReview {
+  _id: string
+  productId: string
+  userId: string | IPublicUser
+  rating: number
+  title?: string
+  body: string
+  isVerified: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProductFilters {
   category?: string
+  subCategory?: string
   brand?: string
   minPrice?: number
   maxPrice?: number
   rating?: number
   inStock?: boolean
   isFeatured?: boolean
-  tags?: string[]
+  sellerId?: string
+  search?: string
+  page?: number
+  limit?: number
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'popular'
 }
 
-export interface IReview {
-  _id: string
-  product: string
-  user: string
-  rating: number
-  title: string
-  body: string
-  createdAt: string
+export interface CartItem {
+  product: IProduct
+  quantity: number
 }

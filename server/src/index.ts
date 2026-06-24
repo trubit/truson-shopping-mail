@@ -5,10 +5,12 @@ import { connectRedis } from './database/redis.js'
 import { initSockets } from './sockets/index.js'
 import { env } from './config/env.js'
 import { logger } from './utils/logger.js'
+import { verifyEmailConfig } from './utils/email.js'
 
 const bootstrap = async (): Promise<void> => {
   await connectMongoDB()
   await connectRedis()
+  verifyEmailConfig() // non-blocking — logs result when ready
 
   const httpServer = createServer(app)
   initSockets(httpServer)
