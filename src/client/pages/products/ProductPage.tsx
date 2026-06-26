@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FiShoppingCart, FiMinus, FiPlus, FiArrowLeft } from 'react-icons/fi'
 import { useProduct, useProductReviews, useAddReview } from '../../hooks/useProducts.js'
 import { useAuthStore } from '../../store/authStore.js'
-import { useProductStore } from '../../store/productStore.js'
+import { useCartStore } from '../../store/cartStore.js'
 import ImageGallery from '../../components/product/ImageGallery/index.js'
 import RatingStars from '../../components/product/RatingStars/index.js'
 import PriceTag from '../../components/product/PriceTag/index.js'
@@ -139,7 +139,7 @@ function ReviewSection({ productId }: { productId: string }) {
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>()
   const { data: product, isLoading, isError } = useProduct(id ?? '')
-  const addToCart = useProductStore((s) => s.addToCart)
+  const addGuestItem = useCartStore((s) => s.addGuestItem)
   const [qty, setQty] = useState(1)
 
   if (isLoading) {
@@ -213,7 +213,7 @@ export default function ProductPage() {
                 <span className="product-detail__qty-val">{safeQty}</span>
                 <button className="product-detail__qty-btn" onClick={() => setQty((q) => Math.min(product.stockQuantity, q + 1))} disabled={qty >= product.stockQuantity}><FiPlus size={14} /></button>
               </div>
-              <button className="product-detail__add-btn" onClick={() => addToCart(product, safeQty)} style={{ flex: 1 }}>
+              <button className="product-detail__add-btn" onClick={() => addGuestItem(product, safeQty)} style={{ flex: 1 }}>
                 <FiShoppingCart size={18} /> Add to Cart
               </button>
             </div>

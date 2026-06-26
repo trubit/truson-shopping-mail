@@ -1,2 +1,4 @@
 export * from './auth.validators.js'
 export * from './product.validators.js'
+export * from './cart.validators.js'
+export * from './checkout.validators.js'

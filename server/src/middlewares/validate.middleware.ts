@@ -9,12 +9,22 @@ export const validate =
   (req: Request, _res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req[target])
     if (result.success) {
-      req[target] = result.data
+      if (target === 'query') {
+        // Express 5: req.query is a configurable getter — override it on the instance
+        Object.defineProperty(req, 'query', {
+          value: result.data,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        })
+      } else {
+        req[target] = result.data
+      }
       return next()
     }
-    const issues = result.error.issues ?? result.error.errors ?? []
+    const issues = result.error.issues ?? []
     const errors = Object.fromEntries(
-      issues.map((e: { path: (string | number)[]; message: string }) => [e.path.join('.') || 'value', e.message]),
+      issues.map((e) => [(e.path as (string | number)[]).map(String).join('.') || 'value', e.message]),
     )
     next(new AppError('Validation failed', 422, errors))
   }

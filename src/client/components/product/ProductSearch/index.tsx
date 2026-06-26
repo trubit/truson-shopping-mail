@@ -14,7 +14,7 @@ export default function ProductSearch({
   onSearch,
 }: ProductSearchProps) {
   const [value, setValue] = useState(defaultValue)
-  const inputRef = useNavigate ? useRef<HTMLInputElement>(null) : useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
   const handleSubmit = (e: React.FormEvent) => {

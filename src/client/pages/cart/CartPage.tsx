@@ -1,63 +1,99 @@
-import { useCartStore } from '../../store/cartStore.js'
-import { formatCurrency } from '../../../shared/helpers/index.js'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useCart } from '../../hooks/useCart.js'
+import CartList from '../../components/cart/CartList/index.js'
+import CartSummary from '../../components/cart/CartSummary/index.js'
+import EmptyCart from '../../components/cart/EmptyCart/index.js'
+import RecommendedProducts from '../../components/cart/RecommendedProducts/index.js'
+import '../../styles/cart.css'
+
+// Coupon state — Phase 6 will wire to API
+interface CouponState {
+  code:     string | undefined
+  discount: number
+  error:    string | undefined
+  loading:  boolean
+}
 
 export default function CartPage() {
-  const { items, totalPrice, totalItems, removeItem, updateQuantity } = useCartStore()
+  const {
+    items,
+    totals,
+    isLoading,
+    isMutating,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  } = useCart()
 
-  if (items.length === 0) {
+  const [coupon, setCoupon] = useState<CouponState>({
+    code: undefined, discount: 0, error: undefined, loading: false,
+  })
+
+  const handleCouponApply = (code: string) => {
+    setCoupon({ code: undefined, discount: 0, error: 'Invalid or expired coupon code', loading: false })
+    // Phase 6: POST /api/v1/cart/coupon { code }
+    void code
+  }
+
+  const handleCouponRemove = () => {
+    setCoupon({ code: undefined, discount: 0, error: undefined, loading: false })
+  }
+
+  if (isLoading) {
     return (
-      <div className="container section" style={{ textAlign: 'center' }}>
-        <h2>Your cart is empty</h2>
-        <p style={{ color: 'var(--color-neutral-500)', marginBottom: 'var(--space-6)' }}>
-          Add some products to get started
-        </p>
-        <Link to="/products" className="btn btn-primary btn-lg">Browse Products</Link>
+      <div className="cart-page container section">
+        <div className="cart-page__skeleton">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton cart-item-skeleton" />
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container section">
-      <h2 style={{ marginBottom: 'var(--space-6)' }}>Shopping Cart ({totalItems} items)</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 'var(--space-6)', alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          {items.map(({ product, quantity }) => (
-            <div key={product._id} className="card">
-              <div className="card-body flex-between">
-                <div>
-                  <h5>{product.name}</h5>
-                  <p style={{ color: 'var(--color-neutral-500)', fontSize: 'var(--text-sm)' }}>
-                    {formatCurrency(product.price)} each
-                  </p>
-                </div>
-                <div className="flex" style={{ alignItems: 'center', gap: 'var(--space-3)' }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => updateQuantity(product._id, quantity - 1)}>−</button>
-                  <span style={{ minWidth: 24, textAlign: 'center' }}>{quantity}</span>
-                  <button className="btn btn-ghost btn-sm" onClick={() => updateQuantity(product._id, quantity + 1)}>+</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => removeItem(product._id)}>Remove</button>
-                </div>
-              </div>
-            </div>
-          ))}
+    <div className="cart-page">
+      <div className="container section">
+        {/* Page header */}
+        <div className="cart-page__header">
+          <h1 className="cart-page__title">Shopping Cart</h1>
+          {items.length > 0 && (
+            <span className="cart-page__count">{totals.totalItems} item{totals.totalItems !== 1 ? 's' : ''}</span>
+          )}
         </div>
 
-        <div className="card" style={{ position: 'sticky', top: 80 }}>
-          <div className="card-body">
-            <h4 style={{ marginBottom: 'var(--space-4)' }}>Order Summary</h4>
-            <div className="flex-between" style={{ marginBottom: 'var(--space-2)' }}>
-              <span>Subtotal</span>
-              <strong>{formatCurrency(totalPrice)}</strong>
+        {items.length === 0 ? (
+          <EmptyCart />
+        ) : (
+          <div className="cart-page__layout">
+            {/* Left: cart items */}
+            <div className="cart-page__main">
+              <CartList
+                items={items}
+                onRemove={removeFromCart}
+                onUpdateQty={updateQuantity}
+                isMutating={isMutating}
+              />
             </div>
-            <div className="divider" />
-            <button className="btn btn-primary btn-lg" style={{ width: '100%', marginBottom: 'var(--space-3)' }}>
-              Checkout
-            </button>
-            <Link to="/products" className="btn btn-ghost" style={{ width: '100%', textAlign: 'center' }}>
-              Continue Shopping
-            </Link>
+
+            {/* Right: summary */}
+            <div className="cart-page__aside">
+              <CartSummary
+                totals={totals}
+                onCouponApply={handleCouponApply}
+                onCouponRemove={handleCouponRemove}
+                appliedCoupon={coupon.code}
+                couponLoading={coupon.loading}
+                couponError={coupon.error}
+                onClearCart={clearCart}
+                isCheckoutEnabled={items.length > 0}
+              />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Recommended products */}
+        <RecommendedProducts />
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
 import { FiUser, FiMail, FiLock, FiPhone, FiAtSign } from 'react-icons/fi'
@@ -38,7 +38,7 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
+  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) as Resolver<RegisterInput> })
 
   const strength = getPasswordStrength(watch('password') ?? '')
 

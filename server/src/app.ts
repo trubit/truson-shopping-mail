@@ -8,9 +8,12 @@ import { globalLimiter } from './middlewares/rateLimiter.middleware.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
 import { API_PREFIX } from '../../src/shared/constants/index.js'
 
-import authRoutes    from './routes/auth.routes.js'
-import profileRoutes from './routes/profile.routes.js'
-import productRoutes from './routes/product.routes.js'
+import authRoutes         from './routes/auth.routes.js'
+import profileRoutes      from './routes/profile.routes.js'
+import productRoutes      from './routes/product.routes.js'
+import cartRoutes         from './routes/cart.routes.js'
+import checkoutRoutes     from './routes/checkout.routes.js'
+import notificationRoutes from './routes/notification.routes.js'
 
 const app = express()
 
@@ -27,8 +30,8 @@ app.use(
 app.use(globalLimiter)
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(express.json({ limit: '2mb' }))
+app.use(express.urlencoded({ extended: true, limit: '2mb' }))
 app.use(cookieParser())
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
@@ -40,9 +43,12 @@ app.get('/health', (_req, res) => {
 })
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-app.use(`${API_PREFIX}/auth`,     authRoutes)
-app.use(`${API_PREFIX}/profile`,  profileRoutes)
-app.use(`${API_PREFIX}/products`, productRoutes)
+app.use(`${API_PREFIX}/auth`,          authRoutes)
+app.use(`${API_PREFIX}/profile`,       profileRoutes)
+app.use(`${API_PREFIX}/products`,      productRoutes)
+app.use(`${API_PREFIX}/cart`,          cartRoutes)
+app.use(`${API_PREFIX}/checkout`,      checkoutRoutes)
+app.use(`${API_PREFIX}/notifications`, notificationRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFound)

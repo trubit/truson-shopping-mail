@@ -3,7 +3,7 @@ import { FiShoppingCart, FiEye } from 'react-icons/fi'
 import RatingStars from '../RatingStars/index.js'
 import PriceTag from '../PriceTag/index.js'
 import ProductBadges from '../Badge/index.js'
-import { useProductStore } from '../../../store/productStore.js'
+import { useCartStore } from '../../../store/cartStore.js'
 import type { IProduct } from '../../../../shared/types/product.types.js'
 
 interface ProductCardProps {
@@ -12,13 +12,13 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onQuickView }: ProductCardProps) {
-  const addToCart = useProductStore((s) => s.addToCart)
+  const addItem = useCartStore((s) => s.addGuestItem)
   const inStock   = product.stockQuantity > 0
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (inStock) addToCart(product, 1)
+    if (inStock) addItem(product, 1)
   }
 
   const handleQuickView = (e: React.MouseEvent) => {

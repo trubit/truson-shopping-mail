@@ -99,7 +99,7 @@ export const createProduct = async (
   data: CreateProductInput,
   sellerId: string,
 ): Promise<IProductDocument> => {
-  const existing = await Product.findOne({ sku: data.sku.toUpperCase() })
+  const existing = await Product.findOne({ sku: data.sku.toUpperCase(), status: { $ne: 'blocked' }, isActive: true })
   if (existing) throw new AppError('SKU already exists', 409)
 
   const product = await Product.create({

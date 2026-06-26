@@ -11,7 +11,7 @@ import type { IProduct } from '../../../shared/types/product.types.js'
 export default function SearchResults() {
   const [params, setParams]     = useSearchParams()
   const q                       = params.get('q') ?? ''
-  const { filters, setFilters } = useProductStore()
+  const { filters } = useProductStore()
   const { data, isLoading }     = useSearchProducts(q, { ...filters, page: Number(params.get('page')) || 1 })
   const [quickView, setQuickView] = useState<IProduct | null>(null)
 

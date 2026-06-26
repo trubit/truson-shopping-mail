@@ -5,7 +5,7 @@ import { APP_NAME } from '../../../shared/constants/index.js'
 
 export default function Navbar() {
   const { isAuthenticated, user, clearAuth } = useAuthStore()
-  const totalItems = useCartStore((s) => s.totalItems)
+  const totalItems = useCartStore((s) => s.totalItems())
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -58,7 +58,7 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="btn btn-ghost">{user?.name}</Link>
+              <Link to="/profile" className="btn btn-ghost">{user?.firstName}</Link>
               <button className="btn btn-outline" onClick={handleLogout}>Logout</button>
             </>
           ) : (

@@ -4,7 +4,7 @@ import { sendSuccess, sendCreated, sendNoContent } from '../../utils/response.js
 
 export const addReview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const review = await addOrUpdateReview(req.params.id, req.user!.userId, req.body)
+    const review = await addOrUpdateReview(req.params['id'] as string, req.user!.userId, req.body)
     sendCreated(res, review, 'Review submitted')
   } catch (err) { next(err) }
 }
@@ -13,7 +13,7 @@ export const listReviews = async (req: Request, res: Response, next: NextFunctio
   try {
     const page   = parseInt(req.query.page as string ?? '1', 10)
     const limit  = parseInt(req.query.limit as string ?? '10', 10)
-    const result = await getProductReviews(req.params.id, page, limit)
+    const result = await getProductReviews(req.params['id'] as string, page, limit)
     sendSuccess(res, result.reviews, 'Reviews fetched', 200, result.pagination)
   } catch (err) { next(err) }
 }
@@ -21,7 +21,7 @@ export const listReviews = async (req: Request, res: Response, next: NextFunctio
 export const removeReview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user!.role === 'admin'
-    await deleteReview(req.params.reviewId, req.user!.userId, isAdmin)
+    await deleteReview(req.params['reviewId'] as string, req.user!.userId, isAdmin)
     sendNoContent(res)
   } catch (err) { next(err) }
 }

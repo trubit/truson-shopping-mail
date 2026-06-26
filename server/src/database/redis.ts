@@ -1,4 +1,4 @@
-import Redis from 'ioredis'
+import { Redis } from 'ioredis'
 import { env } from '../config/env.js'
 import { logger } from '../utils/logger.js'
 
@@ -7,7 +7,7 @@ export const redis = new Redis({
   port: env.REDIS_PORT,
   lazyConnect: true,
   enableOfflineQueue: false,
-  retryStrategy: (times) => {
+  retryStrategy: (times: number) => {
     if (times > 3) {
       logger.warn('Redis unavailable — operating without cache')
       return null

@@ -2,19 +2,38 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '../services/authService.js'
 import { useAuthStore } from '../store/authStore.js'
+import { useCartStore } from '../store/cartStore.js'
+import { cartService } from '../services/cartService.js'
 import { queryClient } from '../services/queryClient.js'
+import { CART_KEY } from './useCart.js'
 import type { LoginInput, RegisterInput } from '../../shared/validators/auth.validators.js'
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 export const useLogin = () => {
-  const { setAuth } = useAuthStore()
-  const navigate = useNavigate()
+  const { setAuth }    = useAuthStore()
+  const navigate       = useNavigate()
+  const { guestItems, clearGuestCart, setServerCart } = useCartStore()
 
   return useMutation({
     mutationFn: (data: LoginInput) => authService.login(data),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       if (res.data) {
         setAuth(res.data.user, res.data.accessToken)
+
+        // Merge guest cart into server cart then clear local
+        if (guestItems.length > 0) {
+          try {
+            const synced = await cartService.syncCart({
+              items: guestItems.map((i) => ({ productId: i.product._id, quantity: i.quantity })),
+            })
+            setServerCart(synced)
+            queryClient.setQueryData(CART_KEY, synced)
+            clearGuestCart()
+          } catch {
+            // Non-fatal — proceed to login even if sync fails
+          }
+        }
+
         navigate('/')
       }
     },

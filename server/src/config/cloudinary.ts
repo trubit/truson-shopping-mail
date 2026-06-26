@@ -25,7 +25,7 @@ export const uploadImageBuffer = (
       folder,
       overwrite:     true,
       resource_type: 'image',
-      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
+      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'center' }],
     }
 
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {

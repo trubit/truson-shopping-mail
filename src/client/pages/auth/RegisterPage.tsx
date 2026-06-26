@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
 import { registerSchema, type RegisterInput } from '../../../shared/validators/auth.validators.js'
@@ -8,7 +8,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
+  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) as Resolver<RegisterInput> })
 
   const onSubmit = async (_data: RegisterInput) => {
     // wired in Phase 2 (Auth module)
@@ -22,21 +22,23 @@ export default function RegisterPage() {
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        {[
-          { id: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe', key: 'name' as const },
-          { id: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com', key: 'email' as const },
-          { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••', key: 'password' as const },
-        ].map(({ id, label, type, placeholder, key }) => (
+        {([
+          { id: 'firstName', label: 'First Name',  type: 'text',     placeholder: 'John'            },
+          { id: 'lastName',  label: 'Last Name',   type: 'text',     placeholder: 'Doe'             },
+          { id: 'username',  label: 'Username',    type: 'text',     placeholder: 'john_doe'        },
+          { id: 'email',     label: 'Email',       type: 'email',    placeholder: 'you@example.com' },
+          { id: 'password',  label: 'Password',    type: 'password', placeholder: '••••••••'        },
+        ] as const).map(({ id, label, type, placeholder }) => (
           <div key={id} className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
             <label className="form-label" htmlFor={id}>{label}</label>
             <input
               id={id}
               type={type}
-              className={`form-control ${errors[key] ? 'is-invalid' : ''}`}
+              className={`form-control ${errors[id] ? 'is-invalid' : ''}`}
               placeholder={placeholder}
-              {...register(key)}
+              {...register(id)}
             />
-            {errors[key] && <span className="form-error">{errors[key]?.message}</span>}
+            {errors[id] && <span className="form-error">{errors[id]?.message}</span>}
           </div>
         ))}
 

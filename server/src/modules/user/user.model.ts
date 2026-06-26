@@ -101,7 +101,7 @@ const userSchema = new mongoose.Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform: (_doc, ret) => {
+      transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.password
         delete ret.emailVerificationToken
         delete ret.emailVerificationExpires

@@ -18,6 +18,7 @@ const ProductPage    = lazy(() => import('../pages/products/ProductPage.js'))
 const SearchResults  = lazy(() => import('../pages/products/SearchResults.js'))
 const CategoryPage   = lazy(() => import('../pages/products/CategoryPage.js'))
 const CartPage       = lazy(() => import('../pages/cart/CartPage.js'))
+const CheckoutPage   = lazy(() => import('../pages/checkout/CheckoutPage.js'))
 const OrdersPage     = lazy(() => import('../pages/orders/OrdersPage.js'))
 const NotFoundPage   = lazy(() => import('../pages/NotFoundPage.js'))
 
@@ -64,6 +65,7 @@ export default function AppRouter() {
           <Route path="/search"               element={<SearchResults />} />
           <Route path="/category/:category"   element={<CategoryPage />} />
           <Route path="/cart"                 element={<CartPage />} />
+          <Route path="/checkout"             element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
           <Route path="/orders"               element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
 
           {/* Seller dashboard */}

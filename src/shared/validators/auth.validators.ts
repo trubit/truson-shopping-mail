@@ -26,7 +26,7 @@ export const registerSchema = z.object({
     .regex(/^\+?[\d\s\-()]{7,20}$/, 'Invalid phone number')
     .optional()
     .or(z.literal('')),
-  role: z.enum(['user', 'seller']).optional().default('user'),
+  role: z.enum(['user', 'seller']).default('user'),
 })
 
 export const forgotPasswordSchema = z.object({

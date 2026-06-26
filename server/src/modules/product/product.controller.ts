@@ -26,7 +26,7 @@ export const featuredProducts = async (req: Request, res: Response, next: NextFu
 
 export const getProduct = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const product = await getProductById(req.params.id)
+    const product = await getProductById(req.params['id'] as string)
     sendSuccess(res, product, 'Product fetched')
   } catch (err) { next(err) }
 }
@@ -42,7 +42,7 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
 
 export const byCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const category = decodeURIComponent(req.params.category)
+    const category = decodeURIComponent(req.params['category'] as string)
     const filters  = req.query as unknown as ProductFiltersInput
     const result   = await getProductsByCategory(category, filters)
     sendSuccess(res, result.products, `Category: ${category}`, 200, result.pagination)
@@ -68,7 +68,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user!.role === 'admin'
-    const product = await updateProduct(req.params.id, req.body, req.user!.userId, isAdmin)
+    const product = await updateProduct(req.params['id'] as string, req.body, req.user!.userId, isAdmin)
     sendSuccess(res, product, 'Product updated')
   } catch (err) { next(err) }
 }
@@ -76,7 +76,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
 export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user!.role === 'admin'
-    await deleteProduct(req.params.id, req.user!.userId, isAdmin)
+    await deleteProduct(req.params['id'] as string, req.user!.userId, isAdmin)
     sendNoContent(res)
   } catch (err) { next(err) }
 }
@@ -84,14 +84,14 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
 // ─── Admin ─────────────────────────────────────────────────────────────────────
 export const approve = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const product = await approveProduct(req.params.id)
+    const product = await approveProduct(req.params['id'] as string)
     sendSuccess(res, product, 'Product approved')
   } catch (err) { next(err) }
 }
 
 export const block = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const product = await blockProduct(req.params.id)
+    const product = await blockProduct(req.params['id'] as string)
     sendSuccess(res, product, 'Product blocked')
   } catch (err) { next(err) }
 }
