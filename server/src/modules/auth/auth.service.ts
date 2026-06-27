@@ -48,6 +48,13 @@ export const loginUser = async (email: string, password: string) => {
 
   if (!user.isActive) throw new AppError('Your account has been deactivated', 403)
 
+  if (!user.emailVerified) {
+    throw new AppError(
+      'Your email address is not verified. Please check your inbox and click the verification link, or request a new one.',
+      403,
+    )
+  }
+
   const tokens = generateTokenPair({ userId: user._id.toString(), email: user.email, role: user.role })
 
   const hashedRefresh = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex')
@@ -140,6 +147,19 @@ export const verifyEmail = async (token: string): Promise<void> => {
   user.emailVerificationToken = undefined
   user.emailVerificationExpires = undefined
   await user.save({ validateBeforeSave: false })
+}
+
+// ─── Resend Verification Email ────────────────────────────────────────────────
+export const resendVerificationEmail = async (email: string): Promise<void> => {
+  const user = await User.findOne({ email: email.toLowerCase() })
+  if (!user || user.emailVerified) return // Silent — don't reveal account state
+
+  const token = user.createEmailVerificationToken()
+  await user.save({ validateBeforeSave: false })
+
+  await sendVerificationEmail(user.email, user.firstName, token).catch((err) => {
+    logger.warn('Resend verification email failed', { email: user.email, error: (err as Error).message })
+  })
 }
 
 // ─── Get Current User ─────────────────────────────────────────────────────────

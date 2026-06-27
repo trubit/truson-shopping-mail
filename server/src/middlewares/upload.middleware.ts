@@ -19,12 +19,18 @@ const uploader = multer({
   },
 })
 
-export const uploadAvatar = (req: Request, res: Response, next: NextFunction): void => {
-  uploader.single('avatar')(req, res, (err) => {
+const wrapMulter = (handler: ReturnType<typeof uploader.single | typeof uploader.array>, req: Request, res: Response, next: NextFunction): void => {
+  handler(req, res, (err) => {
     if (!err) return next()
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-      return next(new AppError('Image must be under 5 MB', 400))
+      return next(new AppError('Each image must be under 5 MB', 400))
     }
     return next(new AppError(err instanceof Error ? err.message : 'File upload error', 400))
   })
 }
+
+export const uploadAvatar = (req: Request, res: Response, next: NextFunction): void =>
+  wrapMulter(uploader.single('avatar'), req, res, next)
+
+export const uploadProductImages = (req: Request, res: Response, next: NextFunction): void =>
+  wrapMulter(uploader.array('images', 8), req, res, next)

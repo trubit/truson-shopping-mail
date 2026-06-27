@@ -5,6 +5,8 @@ import {
   getSellerProducts, getFeaturedProducts,
 } from './product.service.js'
 import { sendSuccess, sendCreated, sendNoContent } from '../../utils/response.js'
+import { uploadImageBuffer, isCloudinaryConfigured } from '../../config/cloudinary.js'
+import { AppError } from '../../middlewares/error.middleware.js'
 import type { ProductFiltersInput } from '../../../../src/shared/validators/product.validators.js'
 
 // ─── Public ────────────────────────────────────────────────────────────────────
@@ -78,6 +80,25 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     const isAdmin = req.user!.role === 'admin'
     await deleteProduct(req.params['id'] as string, req.user!.userId, isAdmin)
     sendNoContent(res)
+  } catch (err) { next(err) }
+}
+
+// ─── Image Upload ──────────────────────────────────────────────────────────────
+export const uploadImages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!isCloudinaryConfigured()) {
+      return next(new AppError('Image uploads require Cloudinary configuration. Add CLOUDINARY_* keys to .env', 503))
+    }
+    const files = req.files as Express.Multer.File[]
+    if (!files || files.length === 0) {
+      return next(new AppError('No images provided', 400))
+    }
+    const uploads = await Promise.all(
+      files.map(f => uploadImageBuffer(f.buffer, 'trusonshopp/products', {
+        transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
+      })),
+    )
+    sendSuccess(res, { urls: uploads.map(u => u.url) }, 'Images uploaded')
   } catch (err) { next(err) }
 }
 

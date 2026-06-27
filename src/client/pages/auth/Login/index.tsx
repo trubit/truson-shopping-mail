@@ -1,30 +1,39 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FiMail, FiLock } from 'react-icons/fi'
+import { FiMail, FiLock, FiAlertCircle, FiCheckCircle, FiRefreshCw } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 import AuthFormCard from '../../../../client/components/auth/AuthFormCard/index.js'
 import AuthInput from '../../../../client/components/auth/AuthInput/index.js'
 import AuthButton from '../../../../client/components/auth/AuthButton/index.js'
 import SocialLogin from '../../../../client/components/auth/SocialLogin/index.js'
-import { useLogin } from '../../../hooks/useAuth.js'
+import { useLogin, useResendVerification } from '../../../hooks/useAuth.js'
 import { loginSchema, type LoginInput } from '../../../../shared/validators/auth.validators.js'
 
 export default function LoginPage() {
   const [params] = useSearchParams()
   const registered = params.get('registered') === 'true'
-  const reset = params.get('reset') === 'true'
+  const reset      = params.get('reset')      === 'true'
 
   const { mutate: login, isPending, error, isError } = useLogin()
+  const { mutate: resend, isPending: resending, isSuccess: resent } = useResendVerification()
+
   const errorMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+  const isUnverified = isError && !!errorMsg?.toLowerCase().includes('not verified')
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
   const onSubmit = (data: LoginInput) => login(data)
+
+  const handleResend = () => {
+    const email = getValues('email')
+    if (email) resend(email)
+  }
 
   return (
     <AuthFormCard title="Sign In" subtitle="Welcome back to TrusonShopp Mall">
@@ -39,8 +48,40 @@ export default function LoginPage() {
             Password reset successfully. Please sign in.
           </div>
         )}
-        {isError && errorMsg && (
+
+        {isError && !isUnverified && errorMsg && (
           <div className="auth-alert auth-alert-error">{errorMsg}</div>
+        )}
+
+        {isUnverified && (
+          <div className="auth-alert auth-alert-error" style={{ flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+              <FiAlertCircle style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{errorMsg}</span>
+            </div>
+            {resent ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: '#065f46', background: 'var(--color-success-50)', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-xs)' }}>
+                <FiCheckCircle />
+                Verification email sent — check your Gmail inbox and spam folder.
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)',
+                  background: 'none', border: '1px solid #fca5a5', borderRadius: 'var(--radius-sm)',
+                  color: '#991b1b', fontSize: 'var(--text-xs)', fontWeight: 600,
+                  padding: 'var(--space-1-5) var(--space-3)', cursor: 'pointer',
+                  opacity: resending ? 0.65 : 1,
+                }}
+              >
+                <FiRefreshCw size={12} className={resending ? 'animate-spin' : ''} />
+                {resending ? 'Sending…' : 'Resend verification email'}
+              </button>
+            )}
+          </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -48,7 +89,7 @@ export default function LoginPage() {
             id="email"
             label="Email address"
             type="email"
-            placeholder="you@example.com"
+            placeholder="you@gmail.com"
             icon={<FiMail />}
             error={errors.email?.message}
             autoComplete="email"

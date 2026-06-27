@@ -7,17 +7,15 @@ export const redis = new Redis({
   port: env.REDIS_PORT,
   lazyConnect: true,
   enableOfflineQueue: false,
+  maxRetriesPerRequest: 1,
   retryStrategy: (times: number) => {
-    if (times > 3) {
-      logger.warn('Redis unavailable — operating without cache')
-      return null
-    }
-    return Math.min(times * 200, 1000)
+    if (times >= 1) return null  // give up immediately after first failure
+    return 200
   },
 })
 
 redis.on('connect', () => logger.info('Redis connected'))
-redis.on('error', (err: Error) => logger.warn('Redis error', { message: err.message }))
+redis.on('error', () => {})  // suppress per-error noise; handled in connectRedis
 
 export const connectRedis = async (): Promise<void> => {
   try {

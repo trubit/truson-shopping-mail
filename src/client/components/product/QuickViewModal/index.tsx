@@ -4,7 +4,7 @@ import { FiX, FiShoppingCart, FiExternalLink } from 'react-icons/fi'
 import RatingStars from '../RatingStars/index.js'
 import PriceTag from '../PriceTag/index.js'
 import ProductBadges from '../Badge/index.js'
-import { useCartStore } from '../../../store/cartStore.js'
+import { useCart } from '../../../hooks/useCart.js'
 import type { IProduct } from '../../../../shared/types/product.types.js'
 
 interface QuickViewModalProps {
@@ -13,7 +13,7 @@ interface QuickViewModalProps {
 }
 
 export default function QuickViewModal({ product, onClose }: QuickViewModalProps) {
-  const addGuestItem = useCartStore((s) => s.addGuestItem)
+  const { addToCart } = useCart()
   const inStock   = product.stockQuantity > 0
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
           <div style={{ display: 'flex', gap: '0.625rem', marginTop: 'auto' }}>
             <button
               className="product-detail__add-btn"
-              onClick={() => { addGuestItem(product, 1); onClose() }}
+              onClick={() => { addToCart(product, 1); onClose() }}
               disabled={!inStock}
               style={{ flex: 1 }}
             >

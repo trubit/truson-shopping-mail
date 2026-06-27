@@ -45,20 +45,8 @@ export default function ProductsPage() {
         </div>
 
         <button
-          className="hide-desktop"
+          className="btn btn-outline hide-desktop"
           onClick={() => setShowMobileFilter(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '0.5rem 1rem',
-            border: '1px solid var(--color-neutral-300)',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-white)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 600,
-          }}
         >
           <FiFilter size={15} /> Filters
         </button>

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import type { ServerResponse } from 'http'
 
 export default defineConfig({
   plugins: [react()],
@@ -24,6 +25,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            const r = res as ServerResponse
+            if (!r.headersSent) {
+              r.writeHead(503, { 'Content-Type': 'application/json' })
+              r.end(JSON.stringify({ success: false, message: 'Server is starting up, please retry' }))
+            }
+          })
+        },
       },
       '/socket.io': {
         target: 'http://localhost:5000',

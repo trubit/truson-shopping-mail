@@ -131,7 +131,10 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'trusonshopp-cart',
-      partialize: (state) => ({ guestItems: state.guestItems }),
+      partialize: (state) => ({
+        guestItems: state.guestItems,
+        serverCart: state.serverCart,
+      }),
     },
   ),
 )

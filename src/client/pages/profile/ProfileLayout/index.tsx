@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import { Container } from 'react-bootstrap'
 import { useProfile } from '../../../hooks/useProfile.js'
 import ProfileHeader from '../../../components/profile/ProfileHeader/index.js'
-import '../../../styles/profile.css'
 
 export default function ProfileLayout() {
   const { data: user, isLoading } = useProfile()

@@ -13,9 +13,21 @@ import profileRoutes      from './routes/profile.routes.js'
 import productRoutes      from './routes/product.routes.js'
 import cartRoutes         from './routes/cart.routes.js'
 import checkoutRoutes     from './routes/checkout.routes.js'
+import orderRoutes        from './routes/order.routes.js'
+import paymentRoutes      from './routes/payment.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
+import adminRoutes        from './routes/admin.routes.js'
+import * as paymentController from './modules/payment/payment.controller.js'
 
 const app = express()
+
+// ─── Stripe Webhook (raw body BEFORE express.json) ────────────────────────────
+// Stripe requires the raw request body for signature verification
+app.post(
+  '/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  paymentController.handleWebhook,
+)
 
 // ─── Security ─────────────────────────────────────────────────────────────────
 app.use(helmet())
@@ -48,7 +60,10 @@ app.use(`${API_PREFIX}/profile`,       profileRoutes)
 app.use(`${API_PREFIX}/products`,      productRoutes)
 app.use(`${API_PREFIX}/cart`,          cartRoutes)
 app.use(`${API_PREFIX}/checkout`,      checkoutRoutes)
+app.use(`${API_PREFIX}/orders`,        orderRoutes)
+app.use(`${API_PREFIX}/payment`,       paymentRoutes)
 app.use(`${API_PREFIX}/notifications`, notificationRoutes)
+app.use(`${API_PREFIX}/admin`,         adminRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFound)

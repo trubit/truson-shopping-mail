@@ -1,0 +1,374 @@
+/* ============================================================
+   orders.css — TrusonShopp Mall Order History
+   ============================================================ */
+
+/* ─── Page ───────────────────────────────────────────────── */
+.orders-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.orders-page__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-900);
+  margin: 0 0 var(--space-1);
+}
+
+.orders-page__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-500);
+  margin: 0;
+}
+
+.orders-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.orders-page__loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.orders-page__skeleton {
+  height: 120px;
+  border-radius: var(--radius-2xl);
+}
+
+.orders-page__error {
+  padding: var(--space-6);
+  background: var(--color-danger-50);
+  color: var(--color-danger);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.orders-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+}
+
+.orders-page__empty-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  background: var(--color-neutral-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-400);
+}
+
+.orders-page__empty-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-800);
+  margin: 0;
+}
+
+.orders-page__empty-text {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-500);
+  max-width: 320px;
+  margin: 0;
+}
+
+/* ─── Order Card ──────────────────────────────────────────── */
+.order-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.order-card:hover { box-shadow: var(--shadow-md); }
+
+/* Header row */
+.order-card__header {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-neutral-100);
+}
+
+.order-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.order-card__meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+}
+
+.order-card__meta-item strong { color: var(--color-neutral-900); }
+
+.order-card__badges {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.order-card__total {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.order-card__toggle {
+  background: none;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-neutral-500);
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.order-card__toggle:hover { background: var(--color-neutral-50); color: var(--color-neutral-800); }
+
+/* Thumbnail strip */
+.order-card__thumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+}
+
+.order-card__thumb-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.order-card__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  border: 1px solid var(--color-neutral-100);
+}
+
+.order-card__thumb--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-lg);
+}
+
+.order-card__thumb-qty {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: var(--font-bold);
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+}
+
+.order-card__thumb-more {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-500);
+}
+
+/* Expanded detail */
+.order-card__detail {
+  border-top: 1px solid var(--color-neutral-100);
+  padding: var(--space-5);
+}
+
+.order-card__items {
+  list-style: none;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.order-card__item {
+  display: grid;
+  grid-template-columns: 52px 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-neutral-50);
+  border-radius: var(--radius-xl);
+}
+
+.order-card__item-img-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-neutral-100);
+}
+
+.order-card__item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-card__item-img--placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.order-card__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.order-card__item-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-neutral-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-card__item-sku {
+  font-size: var(--text-xs);
+  color: var(--color-neutral-400);
+}
+
+.order-card__item-qty {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+}
+
+.order-card__item-total {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-800);
+  white-space: nowrap;
+}
+
+/* Bottom section: shipping + pricing */
+.order-card__bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.order-card__section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-2);
+}
+
+.order-card__shipping p {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-700);
+  margin: 0 0 2px;
+}
+
+.order-card__shipping-method {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-neutral-500);
+  margin-top: var(--space-2) !important;
+  text-transform: capitalize;
+}
+
+.order-card__pricing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.order-card__price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+}
+
+.order-card__price-row--discount { color: #38a169; }
+
+.order-card__price-row--total {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-neutral-200);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-900);
+  font-size: var(--text-base);
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .order-card__header    { grid-template-columns: 1fr auto auto; }
+  .order-card__meta      { gap: var(--space-2); }
+  .order-card__total     { display: none; }
+  .order-card__bottom    { grid-template-columns: 1fr; }
+  .order-card__item      { grid-template-columns: 44px 1fr auto; }
+  .order-card__item-total { display: none; }
+}
+
+@media (max-width: 575.98px) {
+  .order-card__badges    { flex-direction: column; gap: var(--space-1); }
+  .order-card__meta-item:last-child { display: none; }
+}
+
+/* ─── Dark mode ──────────────────────────────────────────────── */
+[data-theme="dark"] .order-card__price-row--discount { color: #4ade80; }

@@ -1,11 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="TrusonShopp Mall — Your trusted enterprise marketplace" />
     <title>TrusonShopp Mall</title>
+    <script>
+      (function(){
+        var t=localStorage.getItem('trusonshopp-theme');
+        try{ var p=JSON.parse(t); if(p&&p.state&&p.state.theme) t=p.state.theme; else t='dark'; }catch(e){ t='dark'; }
+        document.documentElement.setAttribute('data-theme',t||'dark');
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

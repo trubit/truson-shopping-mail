@@ -80,6 +80,14 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err) }
 }
 
+// POST /api/v1/auth/resend-verification
+export const resendVerification = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await authService.resendVerificationEmail(req.body.email)
+    sendSuccess(res, null, 'If that email is registered and unverified, a new verification link has been sent.')
+  } catch (err) { next(err) }
+}
+
 // GET /api/v1/auth/verify-email
 export const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {

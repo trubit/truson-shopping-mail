@@ -69,19 +69,21 @@ export const useLogout = () => {
 
 // ─── Current User ─────────────────────────────────────────────────────────────
 export const useMe = () => {
-  const { isAuthenticated, setAuth, accessToken } = useAuthStore()
+  const { isAuthenticated, updateUser } = useAuthStore()
 
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       const res = await authService.getMe()
-      if (res.data?.user && accessToken) {
-        setAuth(res.data.user, accessToken)
+      if (res.data?.user) {
+        // Keep Zustand user (emailVerified, role, etc.) in sync with server
+        updateUser(res.data.user)
       }
       return res.data?.user
     },
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    enabled:              isAuthenticated,
+    staleTime:            5 * 60 * 1000,
+    refetchOnWindowFocus: true,  // Picks up emailVerified change when user returns from email tab
   })
 }
 
@@ -110,4 +112,10 @@ export const useVerifyEmail = (token: string) =>
     queryFn: () => authService.verifyEmail(token),
     enabled: !!token,
     retry: false,
+  })
+
+// ─── Resend Verification Email ────────────────────────────────────────────────
+export const useResendVerification = () =>
+  useMutation({
+    mutationFn: (email: string) => authService.resendVerification(email),
   })

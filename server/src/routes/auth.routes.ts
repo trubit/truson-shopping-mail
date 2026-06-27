@@ -15,9 +15,10 @@ const router = Router()
 // Public routes
 router.post('/register',        authLimiter, validate(registerSchema),       authController.register)
 router.post('/login',           authLimiter, validate(loginSchema),          authController.login)
-router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
-router.post('/reset-password',  authLimiter, validate(resetPasswordSchema),  authController.resetPassword)
-router.get('/verify-email',                                                  authController.verifyEmail)
+router.post('/forgot-password',      authLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
+router.post('/reset-password',       authLimiter, validate(resetPasswordSchema),  authController.resetPassword)
+router.post('/resend-verification',  authLimiter,                                 authController.resendVerification)
+router.get('/verify-email',                                                        authController.verifyEmail)
 
 // Token refresh (requires valid refresh cookie)
 router.post('/refresh', authController.refresh)

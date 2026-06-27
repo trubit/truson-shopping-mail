@@ -12,15 +12,21 @@ const ResetPasswordPage  = lazy(() => import('../pages/auth/ResetPassword/index.
 const VerifyEmailPage    = lazy(() => import('../pages/auth/VerifyEmail/index.js'))
 
 // App pages
-const HomePage       = lazy(() => import('../pages/home/HomePage.js'))
-const ProductsPage   = lazy(() => import('../pages/products/ProductsPage.js'))
-const ProductPage    = lazy(() => import('../pages/products/ProductPage.js'))
-const SearchResults  = lazy(() => import('../pages/products/SearchResults.js'))
-const CategoryPage   = lazy(() => import('../pages/products/CategoryPage.js'))
-const CartPage       = lazy(() => import('../pages/cart/CartPage.js'))
-const CheckoutPage   = lazy(() => import('../pages/checkout/CheckoutPage.js'))
-const OrdersPage     = lazy(() => import('../pages/orders/OrdersPage.js'))
-const NotFoundPage   = lazy(() => import('../pages/NotFoundPage.js'))
+const HomePage        = lazy(() => import('../pages/home/HomePage.js'))
+const ProductsPage    = lazy(() => import('../pages/products/ProductsPage.js'))
+const ProductPage     = lazy(() => import('../pages/products/ProductPage.js'))
+const SearchResults   = lazy(() => import('../pages/products/SearchResults.js'))
+const CategoryPage    = lazy(() => import('../pages/products/CategoryPage.js'))
+const CartPage        = lazy(() => import('../pages/cart/CartPage.js'))
+const CheckoutPage    = lazy(() => import('../pages/checkout/CheckoutPage.js'))
+const OrdersPage      = lazy(() => import('../pages/orders/OrdersPage.js'))
+const NotFoundPage    = lazy(() => import('../pages/NotFoundPage.js'))
+
+// Payment pages
+const PaymentPage     = lazy(() => import('../pages/payment/PaymentPage/index.js'))
+const PaymentComplete = lazy(() => import('../pages/payment/PaymentComplete/index.js'))
+const PaymentSuccess  = lazy(() => import('../pages/payment/PaymentSuccess/index.js'))
+const PaymentFailed   = lazy(() => import('../pages/payment/PaymentFailed/index.js'))
 
 // Profile pages (nested layout)
 const ProfileLayout = lazy(() => import('../pages/profile/ProfileLayout/index.js'))
@@ -30,7 +36,16 @@ const AddressBook   = lazy(() => import('../pages/profile/AddressBook/index.js')
 const SettingsPage  = lazy(() => import('../pages/profile/Settings/index.js'))
 
 // Seller pages
-const SellerProducts = lazy(() => import('../pages/seller/SellerProducts.js'))
+const SellerProducts      = lazy(() => import('../pages/seller/SellerProducts.js'))
+const SellerProductCreate = lazy(() => import('../pages/seller/SellerProductCreate.js'))
+const SellerProductEdit   = lazy(() => import('../pages/seller/SellerProductEdit.js'))
+
+// Admin pages
+const AdminLayout    = lazy(() => import('../pages/admin/AdminLayout/index.js'))
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard/index.js'))
+const AdminUsers     = lazy(() => import('../pages/admin/AdminUsers/index.js'))
+const AdminProducts  = lazy(() => import('../pages/admin/AdminProducts/index.js'))
+const AdminOrders    = lazy(() => import('../pages/admin/AdminOrders/index.js'))
 
 const SuspenseWrap = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingSpinner fullscreen />}>{children}</Suspense>
@@ -45,6 +60,13 @@ const SellerRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user } = useAuthStore()
   if (!isAuthenticated) return <Navigate to="/login" replace />
   if (user?.role !== 'seller' && user?.role !== 'admin') return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (user?.role !== 'admin') return <Navigate to="/" replace />
   return <>{children}</>
 }
 
@@ -68,16 +90,33 @@ export default function AppRouter() {
           <Route path="/checkout"             element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
           <Route path="/orders"               element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
 
-          {/* Seller dashboard */}
-          <Route path="/seller/products"      element={<SellerRoute><SellerProducts /></SellerRoute>} />
-        </Route>
+          {/* Payment — PrivateRoute except /payment/complete which handles Stripe redirect */}
+          <Route path="/payment/:orderId"   element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
+          <Route path="/payment/complete"   element={<PaymentComplete />} />
+          <Route path="/payment/success"    element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
+          <Route path="/payment/failed"     element={<PrivateRoute><PaymentFailed /></PrivateRoute>} />
 
-        {/* Profile — nested layout with sidebar */}
-        <Route path="/profile" element={<PrivateRoute><ProfileLayout /></PrivateRoute>}>
-          <Route index           element={<ProfilePage />} />
-          <Route path="edit"     element={<EditProfile />} />
-          <Route path="address"  element={<AddressBook />} />
-          <Route path="settings" element={<SettingsPage />} />
+          {/* Seller dashboard */}
+          <Route path="/seller/products"             element={<SellerRoute><SellerProducts /></SellerRoute>} />
+          <Route path="/seller/products/create"      element={<SellerRoute><SellerProductCreate /></SellerRoute>} />
+          <Route path="/seller/products/edit/:id"    element={<SellerRoute><SellerProductEdit /></SellerRoute>} />
+
+
+          {/* Admin dashboard */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index              element={<AdminDashboard />} />
+            <Route path="users"       element={<AdminUsers />} />
+            <Route path="products"    element={<AdminProducts />} />
+            <Route path="orders"      element={<AdminOrders />} />
+          </Route>
+
+          {/* Profile — nested layout with sidebar, inside MainLayout for navbar */}
+          <Route path="/profile" element={<PrivateRoute><ProfileLayout /></PrivateRoute>}>
+            <Route index           element={<ProfilePage />} />
+            <Route path="edit"     element={<EditProfile />} />
+            <Route path="address"  element={<AddressBook />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
         </Route>
 
         {/* Auth — full screen */}

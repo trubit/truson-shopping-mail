@@ -1,74 +1,100 @@
 import { Link } from 'react-router-dom'
 import { APP_NAME } from '../../../shared/constants/index.js'
 
+const FOOTER_COLS = [
+  {
+    title: 'Get to Know Us',
+    links: [
+      { label: 'About Us', to: '/about' },
+      { label: 'Careers', to: '/careers' },
+      { label: 'Press Releases', to: '/press' },
+      { label: 'Investor Relations', to: '/investors' },
+    ],
+  },
+  {
+    title: 'Make Money with Us',
+    links: [
+      { label: 'Sell Products Online', to: '/register' },
+      { label: 'Sell on TrusonShopp', to: '/register' },
+      { label: 'Become an Affiliate', to: '/affiliate' },
+      { label: 'Advertise Your Products', to: '/advertise' },
+    ],
+  },
+  {
+    title: 'Payment Products',
+    links: [
+      { label: 'Secure Payment', to: '/payment' },
+      { label: 'Business Card', to: '/business-card' },
+      { label: 'Reload Balance', to: '/reload' },
+      { label: 'Gift Cards', to: '/gift-cards' },
+    ],
+  },
+  {
+    title: 'Let Us Help You',
+    links: [
+      { label: 'Your Account', to: '/profile' },
+      { label: 'Your Orders', to: '/orders' },
+      { label: 'Shipping Rates', to: '/shipping' },
+      { label: 'Returns & Replacements', to: '/returns' },
+      { label: 'Help', to: '/help' },
+    ],
+  },
+]
+
 export default function Footer() {
   const year = new Date().getFullYear()
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
   return (
-    <footer
-      style={{
-        background: 'var(--color-neutral-900)',
-        color: 'var(--color-neutral-400)',
-        padding: 'var(--space-12) 0 var(--space-6)',
-        marginTop: 'auto',
-      }}
-    >
-      <div className="container">
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 'var(--space-8)',
-            marginBottom: 'var(--space-8)',
-          }}
-        >
-          <div>
-            <h3 style={{ color: 'var(--color-white)', fontSize: 'var(--text-lg)', marginBottom: 'var(--space-3)' }}>
-              {APP_NAME}
-            </h3>
-            <p style={{ fontSize: 'var(--text-sm)', lineHeight: 'var(--leading-relaxed)' }}>
-              Your trusted marketplace for quality products from verified sellers.
-            </p>
-          </div>
+    <footer className="amz-footer">
+      {/* Back to top */}
+      <button className="amz-footer__top-btn" onClick={scrollToTop} aria-label="Back to top">
+        Back to top
+      </button>
 
-          <div>
-            <h4 style={{ color: 'var(--color-white)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
-              Shop
-            </h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {['Products', 'Categories', 'Deals', 'New Arrivals'].map((l) => (
-                <li key={l}>
-                  <Link to="/products" style={{ color: 'var(--color-neutral-400)', fontSize: 'var(--text-sm)' }}>
-                    {l}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 style={{ color: 'var(--color-white)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
-              Account
-            </h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {[{ label: 'Login', to: '/login' }, { label: 'Register', to: '/register' }, { label: 'Orders', to: '/orders' }, { label: 'Profile', to: '/profile' }].map(({ label, to }) => (
-                <li key={label}>
-                  <Link to={to} style={{ color: 'var(--color-neutral-400)', fontSize: 'var(--text-sm)' }}>
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      {/* Main columns */}
+      <div className="amz-footer__main">
+        <div className="container">
+          <div className="amz-footer__grid">
+            {FOOTER_COLS.map((col) => (
+              <div key={col.title} className="amz-footer__col">
+                <h4 className="amz-footer__col-title">{col.title}</h4>
+                <ul className="amz-footer__col-list">
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <Link to={l.to} className="amz-footer__link">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div
-          className="divider"
-          style={{ borderColor: 'var(--color-neutral-700)', background: 'var(--color-neutral-700)' }}
-        />
+      {/* Divider */}
+      <div className="amz-footer__divider" />
 
-        <p style={{ textAlign: 'center', fontSize: 'var(--text-sm)', marginTop: 'var(--space-4)' }}>
-          &copy; {year} {APP_NAME}. All rights reserved.
-        </p>
+      {/* Logo + bottom */}
+      <div className="amz-footer__bottom">
+        <div className="container">
+          <div className="amz-footer__bottom-inner">
+            <Link to="/" className="amz-footer__logo">
+              {APP_NAME}
+            </Link>
+            <div className="amz-footer__bottom-links">
+              <a href="#" className="amz-footer__bottom-link">Conditions of Use</a>
+              <a href="#" className="amz-footer__bottom-link">Privacy Notice</a>
+              <a href="#" className="amz-footer__bottom-link">Your Ads Privacy Choices</a>
+            </div>
+          </div>
+          <p className="amz-footer__copy">
+            &copy; 1996–{year}, {APP_NAME}, Inc. or its affiliates
+          </p>
+        </div>
       </div>
     </footer>
   )

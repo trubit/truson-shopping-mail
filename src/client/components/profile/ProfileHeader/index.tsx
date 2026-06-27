@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FiUser, FiEdit3, FiMapPin, FiSettings, FiLogOut } from 'react-icons/fi'
+import { FiUser, FiEdit3, FiMapPin, FiSettings, FiLogOut, FiPackage, FiGrid } from 'react-icons/fi'
 import { useAuthStore } from '../../../store/authStore.js'
 import type { IUser } from '../../../../shared/types/user.types.js'
 
@@ -45,9 +45,21 @@ export default function ProfileHeader({ user }: Props) {
         <NavLink to="/profile/address" className={({ isActive }) => `profile-nav-item${isActive ? ' active' : ''}`}>
           <FiMapPin /> Address Book
         </NavLink>
+        <NavLink to="/orders" className={({ isActive }) => `profile-nav-item${isActive ? ' active' : ''}`}>
+          <FiPackage /> My Orders
+        </NavLink>
         <NavLink to="/profile/settings" className={({ isActive }) => `profile-nav-item${isActive ? ' active' : ''}`}>
           <FiSettings /> Settings
         </NavLink>
+
+        {(user.role === 'seller' || user.role === 'admin') && (
+          <>
+            <div className="profile-nav-divider" />
+            <NavLink to="/seller/products" className={({ isActive }) => `profile-nav-item profile-nav-item--seller${isActive ? ' active' : ''}`}>
+              <FiGrid /> Seller Dashboard
+            </NavLink>
+          </>
+        )}
 
         <div className="profile-nav-divider" />
 

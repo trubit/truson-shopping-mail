@@ -19,13 +19,15 @@ export interface CloudinaryUploadResult {
 export const uploadImageBuffer = (
   buffer: Buffer,
   folder = 'trusonshopp/avatars',
+  extraOptions: UploadApiOptions = {},
 ): Promise<CloudinaryUploadResult> =>
   new Promise((resolve, reject) => {
     const options: UploadApiOptions = {
       folder,
-      overwrite:     true,
-      resource_type: 'image',
+      overwrite:      true,
+      resource_type:  'image',
       transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'center' }],
+      ...extraOptions,
     }
 
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {

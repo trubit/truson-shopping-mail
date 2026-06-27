@@ -1,14 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { FiCheckCircle } from 'react-icons/fi'
-import OrderReview from '../../../components/checkout/OrderReview/index.js'
 import { useCheckoutStore } from '../../../store/checkoutStore.js'
+import { useCreateOrder }   from '../../../hooks/usePayment.js'
+import OrderReview          from '../../../components/checkout/OrderReview/index.js'
 
 export default function OrderSummaryStep() {
-  const navigate    = useNavigate()
-  const { session, reset, prevStep } = useCheckoutStore()
-  const [placed, setPlaced] = useState(false)
-  const [placing, setPlacing] = useState(false)
+  const { session, prevStep } = useCheckoutStore()
+  const { mutate: createOrder, isPending, error } = useCreateOrder()
 
   if (!session?.shippingAddress) {
     return (
@@ -19,35 +15,9 @@ export default function OrderSummaryStep() {
     )
   }
 
-  const handlePlaceOrder = async () => {
-    setPlacing(true)
-    // Phase 7: POST /api/orders/create from checkout session
-    // For now: show success and reset
-    await new Promise((res) => setTimeout(res, 1200))
-    setPlaced(true)
-    setPlacing(false)
-    reset()
-  }
-
-  if (placed) {
-    return (
-      <div className="checkout-success">
-        <FiCheckCircle size={64} className="checkout-success__icon" />
-        <h2 className="checkout-success__title">Order Placed!</h2>
-        <p className="checkout-success__message">
-          Thank you for your order. Payment integration is coming in the next phase.
-          Your checkout details have been saved.
-        </p>
-        <div className="checkout-success__actions">
-          <button className="btn btn-primary btn-lg" onClick={() => navigate('/orders')}>
-            View My Orders
-          </button>
-          <button className="btn btn-outline" onClick={() => navigate('/products')}>
-            Continue Shopping
-          </button>
-        </div>
-      </div>
-    )
+  const handlePlaceOrder = () => {
+    if (!session._id) return
+    createOrder({ checkoutSessionId: session._id })
   }
 
   return (
@@ -57,7 +27,13 @@ export default function OrderSummaryStep() {
         Please confirm all details before placing your order.
       </p>
 
-      <OrderReview onPlaceOrder={handlePlaceOrder} isSubmitting={placing} />
+      {error && (
+        <div className="checkout-step__error-banner">
+          {(error as Error).message ?? 'Failed to place order. Please try again.'}
+        </div>
+      )}
+
+      <OrderReview onPlaceOrder={handlePlaceOrder} isSubmitting={isPending} />
 
       <button className="btn btn-ghost checkout-step__back-link" onClick={prevStep}>
         ← Back to Shipping

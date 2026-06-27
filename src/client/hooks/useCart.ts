@@ -12,7 +12,7 @@ export const CART_KEY = ['cart'] as const
 // ─── React Query — server cart ────────────────────────────────────────────────
 export const useServerCart = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const setServerCart   = useCartStore((s) => s.setServerCart)
+  const { setServerCart, serverCart: persistedCart } = useCartStore()
 
   return useQuery({
     queryKey: CART_KEY,
@@ -21,8 +21,12 @@ export const useServerCart = () => {
       setServerCart(cart)
       return cart
     },
-    enabled:   isAuthenticated,
-    staleTime: 30_000,
+    enabled:              isAuthenticated,
+    staleTime:            30_000,
+    // Use the Zustand-persisted cart as initial data so the cart shows
+    // immediately on page refresh, while a background refetch updates it.
+    initialData:          persistedCart ?? undefined,
+    initialDataUpdatedAt: 0,   // Always treat as stale → always background-refetch
   })
 }
 
@@ -127,7 +131,7 @@ export const useCart = () => {
     guestTotals,
   } = useCartStore()
 
-  const { isLoading, isFetching } = useServerCart()
+  const { isLoading, isFetching, isError: cartFetchError } = useServerCart()
   const addMutation    = useAddToCartMutation()
   const updateMutation = useUpdateCartItemMutation()
   const removeMutation = useRemoveFromCartMutation()
@@ -211,12 +215,13 @@ export const useCart = () => {
     clearMutation.isPending
 
   return {
-    items:        displayItems,
+    items:          displayItems,
     totals,
-    isLoading:    isAuthenticated ? isLoading : false,
-    isFetching:   isAuthenticated ? isFetching : false,
+    isLoading:      isAuthenticated ? isLoading : false,
+    isFetching:     isAuthenticated ? isFetching : false,
+    isFetchError:   isAuthenticated ? cartFetchError : false,
     isMutating,
-    isGuest:      !isAuthenticated,
+    isGuest:        !isAuthenticated,
     addToCart,
     removeFromCart,
     updateQuantity,

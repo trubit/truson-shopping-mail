@@ -49,4 +49,9 @@ export const authService = {
     const res = await api.get<ApiResponse<null>>(`/auth/verify-email?token=${token}`)
     return res.data
   },
+
+  resendVerification: async (email: string) => {
+    const res = await api.post<ApiResponse<null>>('/auth/resend-verification', { email })
+    return res.data
+  },
 }
