@@ -83,7 +83,7 @@ export default function AdminOrders() {
                 {orders.length === 0 ? (
                   <tr><td colSpan={8} className="admin-table__empty">No orders found</td></tr>
                 ) : (
-                  orders.map((order: IOrder & { userId?: { firstName: string; lastName: string; email: string } }) => (
+                  (orders as Array<IOrder & { userId?: { firstName: string; lastName: string; email: string } }>).map((order) => (
                     <tr key={order._id}>
                       <td style={{ fontWeight: 600 }}>#{order.orderNumber}</td>
                       <td>

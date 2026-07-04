@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
 } from 'recharts'
 import { FiUsers, FiPackage, FiShoppingBag, FiDollarSign, FiAlertCircle, FiArrowRight } from 'react-icons/fi'
 import { useAdminStats } from '../../../hooks/useAdmin.js'
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="_id" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `$${v}`} width={55} />
-                <Tooltip formatter={(v: number) => [formatCurrency(v), 'Revenue']} labelFormatter={l => `Date: ${l}`} />
+                <Tooltip formatter={(v) => [formatCurrency(Number(v) || 0), 'Revenue']} labelFormatter={l => `Date: ${l}`} />
                 <Area type="monotone" dataKey="revenue" stroke="#FF9900" fill="url(#revenueGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={orderPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+                <Pie data={orderPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
                   {orderPieData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
               {stats.recentOrders.length === 0 ? (
                 <tr><td colSpan={5} className="admin-table__empty">No orders yet</td></tr>
               ) : (
-                stats.recentOrders.map((order: RecentOrder) => (
+                (stats.recentOrders as unknown as RecentOrder[]).map((order) => (
                   <tr key={order._id} className="admin-recent-row">
                     <td style={{ fontWeight: 600 }}>#{order.orderNumber}</td>
                     <td>{order.userId?.firstName} {order.userId?.lastName}</td>

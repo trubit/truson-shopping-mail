@@ -50,7 +50,7 @@ let accessToken: string
 let testProductId: string
 
 beforeAll(async () => {
-  const user = await UserModel.create({
+  await UserModel.create({
     firstName: 'Cart',
     lastName: 'Tester',
     username: 'cart_tester_user',

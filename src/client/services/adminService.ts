@@ -18,8 +18,6 @@ interface PagedResponse<T> {
   pagination: { page: number; limit: number; total: number; totalPages: number; hasNext: boolean; hasPrev: boolean }
 }
 
-const unwrap = <T>(res: { data: { data: T; pagination?: PagedResponse<T>['pagination'] } }) => res.data
-
 export const adminService = {
   getStats: (): Promise<{ data: AdminStats }> =>
     api.get('/admin/stats').then(r => r.data),

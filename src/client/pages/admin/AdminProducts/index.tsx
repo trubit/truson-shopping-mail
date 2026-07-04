@@ -87,7 +87,7 @@ export default function AdminProducts() {
                 {products.length === 0 ? (
                   <tr><td colSpan={8} className="admin-table__empty">No products found</td></tr>
                 ) : (
-                  products.map((product: IProduct & { sellerId?: { firstName: string; lastName: string; email: string } }) => (
+                  (products as Array<IProduct & { sellerId?: { firstName: string; lastName: string; email: string } }>).map((product) => (
                     <tr key={product._id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>

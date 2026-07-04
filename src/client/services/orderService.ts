@@ -32,7 +32,14 @@ export const orderService = {
     createdAt: string
     updatedAt: string
   }> {
-    return api.get(`/orders/${orderId}/track`).then(unwrap)
+    return api.get(`/orders/${orderId}/track`).then(unwrap<{
+      orderNumber: string
+      orderStatus: string
+      shippingMethod: string
+      tracking: IOrderTracking
+      createdAt: string
+      updatedAt: string
+    }>)
   },
 
   // ── Cancel ──────────────────────────────────────────────────────────────────

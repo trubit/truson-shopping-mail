@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link } from 'react-router-dom'
-import { FiGrid, FiUsers, FiPackage, FiShoppingBag, FiBarChart2 } from 'react-icons/fi'
+import { FiGrid, FiUsers, FiPackage, FiShoppingBag } from 'react-icons/fi'
 import { useAdminStats } from '../../../hooks/useAdmin.js'
 import Logo from '../../../components/ui/Logo/index.js'
 
