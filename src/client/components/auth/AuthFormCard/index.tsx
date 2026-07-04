@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { APP_NAME } from '../../../../shared/constants/index.js'
+import Logo from '../../ui/Logo/index.js'
 import '../../../../client/styles/auth.css'
 
 interface AuthFormCardProps {
@@ -15,7 +15,7 @@ export default function AuthFormCard({ title, subtitle, wide, children }: AuthFo
     <div className="auth-page">
       <header className="auth-header">
         <Link to="/" className="auth-header-logo">
-          Truson<span>Shopp</span> Mall
+          <Logo size="md" theme="dark" />
         </Link>
       </header>
 
@@ -28,7 +28,7 @@ export default function AuthFormCard({ title, subtitle, wide, children }: AuthFo
       </main>
 
       <footer style={{ textAlign: 'center', padding: 'var(--space-6)', fontSize: 'var(--text-xs)', color: 'var(--color-neutral-400)' }}>
-        &copy; {new Date().getFullYear()} {APP_NAME} &nbsp;|&nbsp;
+        &copy; {new Date().getFullYear()} TrusonShopp Mall &nbsp;|&nbsp;
         <a href="#" className="auth-link">Privacy</a> &nbsp;|&nbsp;
         <a href="#" className="auth-link">Terms</a> &nbsp;|&nbsp;
         <a href="#" className="auth-link">Help</a>

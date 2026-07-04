@@ -8,8 +8,8 @@ import { useAuthStore } from '../../store/authStore.js'
 import { useCartStore } from '../../store/cartStore.js'
 import { useLanguageStore, LANGUAGES } from '../../store/languageStore.js'
 import { useT } from '../../i18n/useT.js'
-import { APP_NAME } from '../../../shared/constants/index.js'
-import { PRODUCT_CATEGORIES } from '../../../shared/constants/index.js'
+import { PRODUCT_CATEGORIES, ROLES } from '../../../shared/constants/index.js'
+import Logo from '../ui/Logo/index.js'
 
 const CATEGORY_ICONS: Record<string, string> = {
   'Electronics': '💻', 'Clothing & Fashion': '👗', 'Home & Garden': '🏡',
@@ -104,9 +104,8 @@ export default function Navbar() {
           <div className="amz-header__inner">
 
             {/* Logo */}
-            <Link to="/" className="amz-logo" aria-label={APP_NAME}>
-              <span className="amz-logo__text">{APP_NAME}</span>
-              <span className="amz-logo__dot">.</span>
+            <Link to="/" className="amz-logo">
+              <Logo size="md" theme="dark" />
             </Link>
 
             {/* Deliver to */}
@@ -254,12 +253,12 @@ export default function Navbar() {
                             <Link to="/orders" className="amz-account-dropdown__link" onClick={() => setAccountMenuOpen(false)}>
                               <FiPackage size={13} /> {t.acc_orders}
                             </Link>
-                            {user?.role === 'admin' && (
+                            {user?.role === ROLES.ADMIN && (
                               <Link to="/admin" className="amz-account-dropdown__link" onClick={() => setAccountMenuOpen(false)}>
                                 <FiSettings size={13} /> {t.acc_admin}
                               </Link>
                             )}
-                            {(user?.role === 'seller' || user?.role === 'admin') && (
+                            {(user?.role === ROLES.SELLER || user?.role === ROLES.ADMIN) && (
                               <Link to="/seller/products" className="amz-account-dropdown__link" onClick={() => setAccountMenuOpen(false)}>
                                 <FiPackage size={13} /> {t.acc_seller_hub}
                               </Link>
@@ -417,7 +416,7 @@ export default function Navbar() {
                 <Link to="/profile" className="amz-mobile-menu__link" onClick={() => setMobileMenuOpen(false)}>
                   {t.acc_profile}
                 </Link>
-                {user?.role === 'admin' && (
+                {user?.role === ROLES.ADMIN && (
                   <Link to="/admin" className="amz-mobile-menu__link" onClick={() => setMobileMenuOpen(false)}>{t.acc_admin}</Link>
                 )}
                 <button className="amz-mobile-menu__link amz-mobile-menu__link--btn" onClick={handleLogout}>

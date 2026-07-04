@@ -35,10 +35,16 @@ const EditProfile   = lazy(() => import('../pages/profile/EditProfile/index.js')
 const AddressBook   = lazy(() => import('../pages/profile/AddressBook/index.js'))
 const SettingsPage  = lazy(() => import('../pages/profile/Settings/index.js'))
 
+// Order detail pages
+const OrderDetails = lazy(() => import('../pages/orders/OrderDetails/index.js'))
+const TrackOrder   = lazy(() => import('../pages/orders/TrackOrder/index.js'))
+const ReturnOrder  = lazy(() => import('../pages/orders/ReturnOrder/index.js'))
+
 // Seller pages
 const SellerProducts      = lazy(() => import('../pages/seller/SellerProducts.js'))
 const SellerProductCreate = lazy(() => import('../pages/seller/SellerProductCreate.js'))
 const SellerProductEdit   = lazy(() => import('../pages/seller/SellerProductEdit.js'))
+const SellerOrders        = lazy(() => import('../pages/seller/SellerOrders/index.js'))
 
 // Admin pages
 const AdminLayout    = lazy(() => import('../pages/admin/AdminLayout/index.js'))
@@ -87,8 +93,11 @@ export default function AppRouter() {
           <Route path="/search"               element={<SearchResults />} />
           <Route path="/category/:category"   element={<CategoryPage />} />
           <Route path="/cart"                 element={<CartPage />} />
-          <Route path="/checkout"             element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-          <Route path="/orders"               element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+          <Route path="/checkout"              element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+          <Route path="/orders"                element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+          <Route path="/orders/:id"            element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
+          <Route path="/orders/:id/track"      element={<PrivateRoute><TrackOrder /></PrivateRoute>} />
+          <Route path="/orders/:id/return"     element={<PrivateRoute><ReturnOrder /></PrivateRoute>} />
 
           {/* Payment — PrivateRoute except /payment/complete which handles Stripe redirect */}
           <Route path="/payment/:orderId"   element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
@@ -100,6 +109,7 @@ export default function AppRouter() {
           <Route path="/seller/products"             element={<SellerRoute><SellerProducts /></SellerRoute>} />
           <Route path="/seller/products/create"      element={<SellerRoute><SellerProductCreate /></SellerRoute>} />
           <Route path="/seller/products/edit/:id"    element={<SellerRoute><SellerProductEdit /></SellerRoute>} />
+          <Route path="/seller/orders"               element={<SellerRoute><SellerOrders /></SellerRoute>} />
 
 
           {/* Admin dashboard */}

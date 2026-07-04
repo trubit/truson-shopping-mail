@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, Link } from 'react-router-dom'
 import { FiGrid, FiUsers, FiPackage, FiShoppingBag, FiBarChart2 } from 'react-icons/fi'
 import { useAdminStats } from '../../../hooks/useAdmin.js'
+import Logo from '../../../components/ui/Logo/index.js'
 
 export default function AdminLayout() {
   const { data: statsRes } = useAdminStats()
@@ -11,8 +12,10 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar__logo">
-          <h2>Admin Panel</h2>
-          <p>TrusonShopp Mall</p>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <Logo size="sm" theme="dark" />
+          </Link>
+          <p className="admin-sidebar__role">Admin Panel</p>
         </div>
 
         <nav className="admin-nav-section">

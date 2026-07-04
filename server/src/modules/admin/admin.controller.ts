@@ -3,6 +3,7 @@ import * as adminService from './admin.service.js'
 import { sendSuccess } from '../../utils/response.js'
 import { AppError } from '../../middlewares/error.middleware.js'
 import type { UserRole } from '../../../../src/shared/types/auth.types.js'
+import { ROLES } from '../../../../src/shared/constants/index.js'
 
 const paginationMeta = (result: { page: number; limit: number; total: number; totalPages: number }) => ({
   page:       result.page,
@@ -42,7 +43,7 @@ export const toggleUserActive = async (req: Request, res: Response, next: NextFu
 export const changeUserRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { role } = req.body as { role: UserRole }
-    if (!['user', 'seller', 'admin'].includes(role)) {
+    if (!(Object.values(ROLES) as string[]).includes(role)) {
       return next(new AppError('Invalid role', 400))
     }
     const user = await adminService.changeUserRole(req.params['id'] as string, role)
@@ -76,8 +77,18 @@ export const listAllOrders = async (req: Request, res: Response, next: NextFunct
 
 export const updateOrderStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { orderStatus } = req.body as { orderStatus: string }
-    const order = await adminService.updateOrderStatus(req.params['id'] as string, orderStatus)
+    const { orderStatus, tracking } = req.body as {
+      orderStatus: string
+      tracking?: {
+        trackingNumber?: string
+        carrier?: string
+        trackingUrl?: string
+        estimatedDeliveryDate?: string
+        location?: string
+        note?: string
+      }
+    }
+    const order = await adminService.updateOrderStatus(req.params['id'] as string, orderStatus, tracking)
     sendSuccess(res, order, 'Order status updated')
   } catch (err) { next(err) }
 }

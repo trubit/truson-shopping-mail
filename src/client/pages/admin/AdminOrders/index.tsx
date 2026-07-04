@@ -3,8 +3,9 @@ import { FiSearch } from 'react-icons/fi'
 import { useAdminOrders, useUpdateOrderStatus } from '../../../hooks/useAdmin.js'
 import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
 import type { IOrder, OrderStatus } from '../../../../shared/types/order.types.js'
+import { ORDER_STATUS, PAYMENT_STATUS } from '../../../../shared/constants/index.js'
 
-const ORDER_STATUSES: OrderStatus[] = ['pending','confirmed','processing','shipped','delivered','cancelled','refunded']
+const ORDER_STATUSES = Object.values(ORDER_STATUS) as OrderStatus[]
 
 export default function AdminOrders() {
   const [statusFilter, setStatusFilter]   = useState('')
@@ -57,7 +58,7 @@ export default function AdminOrders() {
 
           <select className="admin-select" value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1) }}>
             <option value="">All Payment Status</option>
-            {['pending','paid','failed','refunded'].map(s => <option key={s} value={s}>{s}</option>)}
+            {Object.values(PAYMENT_STATUS).map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
 
@@ -86,8 +87,8 @@ export default function AdminOrders() {
                     <tr key={order._id}>
                       <td style={{ fontWeight: 600 }}>#{order.orderNumber}</td>
                       <td>
-                        <div style={{ fontSize: '.8rem', fontWeight: 600 }}>{(order.userId as any)?.firstName} {(order.userId as any)?.lastName}</div>
-                        <div style={{ fontSize: '.7rem', color: '#6b7280' }}>{(order.userId as any)?.email}</div>
+                        <div style={{ fontSize: '.8rem', fontWeight: 600 }}>{order.userId?.firstName} {order.userId?.lastName}</div>
+                        <div style={{ fontSize: '.7rem', color: '#6b7280' }}>{order.userId?.email}</div>
                       </td>
                       <td style={{ fontSize: '.8rem' }}>{order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? 's' : ''}</td>
                       <td style={{ fontWeight: 700 }}>{formatCurrency(order.grandTotal)}</td>

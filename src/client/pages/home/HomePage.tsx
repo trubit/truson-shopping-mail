@@ -6,8 +6,8 @@ import ProductCarousel from '../../components/product/ProductCarousel/index.js'
 import ProductSearch from '../../components/product/ProductSearch/index.js'
 import QuickViewModal from '../../components/product/QuickViewModal/index.js'
 import { PRODUCT_CATEGORIES } from '../../../shared/constants/index.js'
-import { APP_NAME } from '../../../shared/constants/index.js'
 import type { IProduct } from '../../../shared/types/product.types.js'
+import Logo from '../../components/ui/Logo/index.js'
 
 const CATEGORY_ICONS: Record<string, string> = {
   'Electronics': '💻', 'Clothing & Fashion': '👗', 'Home & Garden': '🏡',
@@ -33,11 +33,13 @@ export default function HomePage() {
       <section className="hero-banner">
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ maxWidth: 600 }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <Logo size="lg" theme="dark" />
+            </div>
             <span className="hero-banner__tagline">Trusted · Fast · Secure</span>
 
             <h1 className="hero-banner__title">
-              Shop Smarter at{' '}
-              <span className="hero-banner__accent">{APP_NAME}</span>
+              Shop Smarter. Live Better.
             </h1>
 
             <p className="hero-banner__subtitle">
@@ -176,7 +178,7 @@ export default function HomePage() {
       <section style={{ background: 'var(--color-navbar-bg)', padding: 'var(--space-10) 0' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h2 style={{ color: '#fff', fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>
-            Start Selling on {APP_NAME}
+            Start Selling on TrusonShopp Mall
           </h2>
           <p style={{ color: 'rgba(255,255,255,.7)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-6)', maxWidth: 440, margin: '0 auto var(--space-6)' }}>
             Reach millions of buyers. List your products today and grow your business.

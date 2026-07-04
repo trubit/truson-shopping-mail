@@ -7,6 +7,15 @@ import { FiUsers, FiPackage, FiShoppingBag, FiDollarSign, FiAlertCircle, FiArrow
 import { useAdminStats } from '../../../hooks/useAdmin.js'
 import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
 
+interface RecentOrder {
+  _id: string
+  orderNumber: string
+  orderStatus: string
+  grandTotal: number
+  createdAt: string
+  userId?: { firstName: string; lastName: string }
+}
+
 const ORDER_STATUS_COLORS: Record<string, string> = {
   pending:    '#f59e0b',
   confirmed:  '#3b82f6',
@@ -152,7 +161,7 @@ export default function AdminDashboard() {
               {stats.recentOrders.length === 0 ? (
                 <tr><td colSpan={5} className="admin-table__empty">No orders yet</td></tr>
               ) : (
-                stats.recentOrders.map((order: any) => (
+                stats.recentOrders.map((order: RecentOrder) => (
                   <tr key={order._id} className="admin-recent-row">
                     <td style={{ fontWeight: 600 }}>#{order.orderNumber}</td>
                     <td>{order.userId?.firstName} {order.userId?.lastName}</td>

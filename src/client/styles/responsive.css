@@ -32,8 +32,7 @@
   .amz-search { flex: 1; }
   .amz-search__category { display: none; }
   .amz-search__input { font-size: var(--text-sm); }
-  .amz-logo__text { font-size: var(--text-base); }
-  .amz-logo__dot  { font-size: var(--text-xl); }
+  .amz-logo .ts-logo { gap: 10px; }
   .amz-cart-link__text { display: none; }
   .amz-action-link    { display: none; }
   .amz-hamburger      { display: flex !important; }
@@ -274,6 +273,36 @@
 @media (max-width: 767.98px) {
   .seller-table th:nth-child(n+4),
   .seller-table td:nth-child(n+4) { display: none; }
+}
+
+/* ─── Order Management (OMS) ─────────────────────────── */
+@media (max-width: 767.98px) {
+  /* Timeline pipeline wraps on small screens */
+  .order-timeline__pipeline { gap: 0; }
+  .order-timeline__step     { min-width: 56px; }
+  .order-timeline__step-label { font-size: 10px; }
+
+  /* Order details items drop price column */
+  .order-details__item { grid-template-columns: 48px 1fr auto; }
+  .order-details__item-total { display: none; }
+
+  /* Order details header stacks */
+  .order-details__header-badges,
+  .order-details__header-actions { flex-direction: row; }
+
+  /* Track page card is full-width */
+  .track-order__card { padding: var(--space-4); }
+
+  /* Seller orders table hides less important columns */
+  .seller-orders__table-wrap .seller-table th:nth-child(n+5),
+  .seller-orders__table-wrap .seller-table td:nth-child(n+5) { display: none; }
+}
+
+@media (max-width: 575.98px) {
+  .order-details__header-actions { gap: var(--space-1); }
+  .order-details__header-actions .btn { font-size: 12px; padding: 4px 8px; }
+  .order-card__actions .btn          { font-size: 12px; padding: 4px 8px; }
+  .return-order__item { flex-wrap: wrap; }
 }
 
 /* ─── Print ──────────────────────────────────────────── */

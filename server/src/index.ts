@@ -31,6 +31,6 @@ const bootstrap = async (): Promise<void> => {
 }
 
 bootstrap().catch((err) => {
-  console.error('Failed to start server:', err)
+  logger.error('Failed to start server', { error: err })
   process.exit(1)
 })

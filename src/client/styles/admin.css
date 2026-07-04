@@ -25,21 +25,19 @@
   padding: 0 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(255,255,255,.1);
   margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }
 
-.admin-sidebar__logo h2 {
-  font-size: .85rem;
-  font-weight: 700;
-  letter-spacing: .05em;
+.admin-sidebar__role {
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .18em;
   text-transform: uppercase;
-  color: #FF9900;
+  color: rgba(200,169,106,.5);
   margin: 0;
-}
-
-.admin-sidebar__logo p {
-  font-size: .7rem;
-  color: rgba(255,255,255,.5);
-  margin: .2rem 0 0;
+  padding-left: 2px;
 }
 
 .admin-nav-section {

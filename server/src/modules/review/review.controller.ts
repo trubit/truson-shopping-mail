@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { addOrUpdateReview, getProductReviews, deleteReview } from './review.service.js'
 import { sendSuccess, sendCreated, sendNoContent } from '../../utils/response.js'
+import { ROLES } from '../../../../src/shared/constants/index.js'
 
 export const addReview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -20,7 +21,7 @@ export const listReviews = async (req: Request, res: Response, next: NextFunctio
 
 export const removeReview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const isAdmin = req.user!.role === 'admin'
+    const isAdmin = req.user!.role === ROLES.ADMIN
     await deleteReview(req.params['reviewId'] as string, req.user!.userId, isAdmin)
     sendNoContent(res)
   } catch (err) { next(err) }

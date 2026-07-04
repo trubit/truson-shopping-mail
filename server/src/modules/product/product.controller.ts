@@ -8,6 +8,7 @@ import { sendSuccess, sendCreated, sendNoContent } from '../../utils/response.js
 import { uploadImageBuffer, isCloudinaryConfigured } from '../../config/cloudinary.js'
 import { AppError } from '../../middlewares/error.middleware.js'
 import type { ProductFiltersInput } from '../../../../src/shared/validators/product.validators.js'
+import { ROLES } from '../../../../src/shared/constants/index.js'
 
 // ─── Public ────────────────────────────────────────────────────────────────────
 export const listProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -69,7 +70,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
 
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const isAdmin = req.user!.role === 'admin'
+    const isAdmin = req.user!.role === ROLES.ADMIN
     const product = await updateProduct(req.params['id'] as string, req.body, req.user!.userId, isAdmin)
     sendSuccess(res, product, 'Product updated')
   } catch (err) { next(err) }
@@ -77,7 +78,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
 
 export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const isAdmin = req.user!.role === 'admin'
+    const isAdmin = req.user!.role === ROLES.ADMIN
     await deleteProduct(req.params['id'] as string, req.user!.userId, isAdmin)
     sendNoContent(res)
   } catch (err) { next(err) }

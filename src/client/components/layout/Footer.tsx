@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { APP_NAME } from '../../../shared/constants/index.js'
+import Logo from '../ui/Logo/index.js'
 
 const FOOTER_COLS = [
   {
@@ -83,7 +83,7 @@ export default function Footer() {
         <div className="container">
           <div className="amz-footer__bottom-inner">
             <Link to="/" className="amz-footer__logo">
-              {APP_NAME}
+              <Logo size="sm" theme="dark" />
             </Link>
             <div className="amz-footer__bottom-links">
               <a href="#" className="amz-footer__bottom-link">Conditions of Use</a>
@@ -92,7 +92,7 @@ export default function Footer() {
             </div>
           </div>
           <p className="amz-footer__copy">
-            &copy; 1996–{year}, {APP_NAME}, Inc. or its affiliates
+            &copy; 1996–{year}, TrusonShopp Mall, Inc. or its affiliates
           </p>
         </div>
       </div>

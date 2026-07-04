@@ -102,8 +102,8 @@ export default function AdminProducts() {
                         </div>
                       </td>
                       <td style={{ fontSize: '.75rem' }}>
-                        <div>{(product.sellerId as any)?.firstName} {(product.sellerId as any)?.lastName}</div>
-                        <div style={{ color: '#9ca3af' }}>{(product.sellerId as any)?.email}</div>
+                        <div>{product.sellerId?.firstName} {product.sellerId?.lastName}</div>
+                        <div style={{ color: '#9ca3af' }}>{product.sellerId?.email}</div>
                       </td>
                       <td style={{ fontSize: '.75rem', color: '#6b7280' }}>{product.category}</td>
                       <td style={{ fontWeight: 600, fontSize: '.8rem' }}>

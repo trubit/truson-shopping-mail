@@ -1,6 +1,7 @@
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { FiXCircle, FiRefreshCw, FiShoppingCart, FiHeadphones } from 'react-icons/fi'
 import { usePaymentStore } from '../../../store/paymentStore.js'
+import { SUPPORT_EMAIL } from '../../../../shared/constants/index.js'
 
 export default function PaymentFailed() {
   const [params] = useSearchParams()
@@ -59,7 +60,7 @@ export default function PaymentFailed() {
 
           <div className="payment-result__support">
             <FiHeadphones size={14} />
-            <span>Need help? <a href="mailto:support@trusonshopp.com">Contact Support</a></span>
+            <span>Need help? <a href={`mailto:${SUPPORT_EMAIL}`}>Contact Support</a></span>
           </div>
         </div>
       </div>

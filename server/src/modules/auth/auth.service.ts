@@ -6,6 +6,7 @@ import { sendVerificationEmail, sendPasswordResetEmail } from '../../utils/email
 import { logger } from '../../utils/logger.js'
 import type { IUserDocument } from '../user/user.model.js'
 import type { RegisterCredentials } from '../../../../src/shared/types/auth.types.js'
+import { ROLES } from '../../../../src/shared/constants/index.js'
 
 // ─── Register ──────────────────────────────────────────────────────────────────
 export const registerUser = async (data: RegisterCredentials): Promise<IUserDocument> => {
@@ -24,7 +25,7 @@ export const registerUser = async (data: RegisterCredentials): Promise<IUserDocu
     email:       data.email.toLowerCase(),
     password:    data.password,
     phoneNumber: data.phoneNumber,
-    role:        data.role ?? 'user',
+    role:        data.role ?? ROLES.USER,
   })
 
   const verifyToken = user.createEmailVerificationToken()

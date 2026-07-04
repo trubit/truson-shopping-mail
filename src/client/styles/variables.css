@@ -1,3 +1,25 @@
+/* ──��� Logo color tokens (used by Logo component theme="auto") ��─ */
+:root {
+  --ts-logo-mark: #0B2D3D;
+  --ts-logo-thin: #091820;
+  --ts-logo-bold: #0B2D3D;
+  --ts-logo-tag:  #A07C45;
+}
+/* The site header/footer/auth header always have a dark background,
+   so any logo placed there should use theme="dark" directly.
+   These auto-tokens are only for contexts where the background
+   can be either light or dark (e.g. product pages, modals). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ts-logo-mark: #C8A96A;
+    --ts-logo-thin: rgba(226,221,212,.78);
+    --ts-logo-bold: #ffffff;
+    --ts-logo-tag:  #DBBF89;
+  }
+}
+[data-theme="dark"]  { --ts-logo-mark: #C8A96A; --ts-logo-thin: rgba(226,221,212,.78); --ts-logo-bold: #ffffff; --ts-logo-tag: #DBBF89; }
+[data-theme="light"] { --ts-logo-mark: #0B2D3D; --ts-logo-thin: #091820; --ts-logo-bold: #0B2D3D; --ts-logo-tag: #A07C45; }
+
 :root {
   /* ─── Amazon Brand Colors ──────────────────────── */
   --color-brand-primary:  #131921;   /* header bg */

@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom'
-import { APP_NAME } from '../../shared/constants/index.js'
+import Logo from '../components/ui/Logo/index.js'
 
 export default function AuthLayout() {
   return (
@@ -13,10 +13,8 @@ export default function AuthLayout() {
     >
       <div style={{ width: '100%', maxWidth: 440 }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-extrabold)', color: 'var(--color-primary)' }}>
-              {APP_NAME}
-            </h1>
+          <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
+            <Logo size="lg" theme="light" />
           </Link>
         </div>
         <div className="card">

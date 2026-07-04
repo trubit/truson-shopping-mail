@@ -3,9 +3,13 @@ import { Product } from '../product/product.model.js'
 import { Order } from '../order/order.model.js'
 import type { UserRole } from '../../../../src/shared/types/auth.types.js'
 import { AppError } from '../../middlewares/error.middleware.js'
+import { ORDER_STATUS, ROLES } from '../../../../src/shared/constants/index.js'
+
+const ADMIN_STATS_REVENUE_DAYS   = 7
+const ADMIN_RECENT_ORDERS_LIMIT  = 5
 
 export const getStats = async () => {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const sevenDaysAgo = new Date(Date.now() - ADMIN_STATS_REVENUE_DAYS * 24 * 60 * 60 * 1000)
 
   const [
     totalUsers, usersByRole,
@@ -27,7 +31,7 @@ export const getStats = async () => {
     ]),
     Order.find()
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(ADMIN_RECENT_ORDERS_LIMIT)
       .populate('userId', 'firstName lastName email'),
     Order.aggregate([
       { $match: { paymentStatus: 'paid', createdAt: { $gte: sevenDaysAgo } } },
@@ -49,9 +53,9 @@ export const getStats = async () => {
   return {
     users: {
       total:   totalUsers,
-      buyers:  byRole['user']   ?? 0,
-      sellers: byRole['seller'] ?? 0,
-      admins:  byRole['admin']  ?? 0,
+      buyers:  byRole[ROLES.USER]   ?? 0,
+      sellers: byRole[ROLES.SELLER] ?? 0,
+      admins:  byRole[ROLES.ADMIN]  ?? 0,
     },
     products: {
       total:   totalProducts,
@@ -180,13 +184,47 @@ export const listAllOrders = async (opts: {
   return { orders, total, page, limit, totalPages: Math.ceil(total / limit) }
 }
 
-export const updateOrderStatus = async (orderId: string, orderStatus: string) => {
-  const valid = ['pending','confirmed','processing','shipped','delivered','cancelled','refunded']
-  if (!valid.includes(orderStatus)) throw new AppError('Invalid order status', 400)
+export const updateOrderStatus = async (
+  orderId:     string,
+  orderStatus: string,
+  tracking?:   {
+    trackingNumber?: string
+    carrier?: string
+    trackingUrl?: string
+    estimatedDeliveryDate?: string
+    location?: string
+    note?: string
+  },
+) => {
+  if (!Object.values(ORDER_STATUS).includes(orderStatus as typeof ORDER_STATUS[keyof typeof ORDER_STATUS])) {
+    throw new AppError('Invalid order status', 400)
+  }
+
+  const $set: Record<string, unknown> = { orderStatus }
+
+  if (tracking) {
+    if (tracking.trackingNumber)        $set['tracking.trackingNumber']        = tracking.trackingNumber
+    if (tracking.carrier)               $set['tracking.carrier']               = tracking.carrier
+    if (tracking.trackingUrl)           $set['tracking.trackingUrl']           = tracking.trackingUrl
+    if (tracking.estimatedDeliveryDate) $set['tracking.estimatedDeliveryDate'] = new Date(tracking.estimatedDeliveryDate)
+  }
+
+  const defaultNote: Record<string, string> = {
+    confirmed: 'Order confirmed', processing: 'Order processing',
+    shipped: 'Order shipped', outForDelivery: 'Out for delivery',
+    delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded',
+  }
+
+  const event = {
+    status:      orderStatus,
+    location:    tracking?.location,
+    description: tracking?.note ?? (defaultNote[orderStatus] ?? 'Status updated by admin'),
+    timestamp:   new Date(),
+  }
 
   const order = await Order.findByIdAndUpdate(
     orderId,
-    { orderStatus },
+    { $set, $push: { 'tracking.events': event } },
     { returnDocument: 'after', runValidators: true },
   ).populate('userId', 'firstName lastName email')
 

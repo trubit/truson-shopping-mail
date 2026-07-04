@@ -1,6 +1,7 @@
 import mongoose, { type Document, type Types } from 'mongoose'
 import { ORDER_STATUS, PAYMENT_STATUS } from '../../../../src/shared/constants/index.js'
 
+// ─── Sub-document interfaces ──────────────────────────────────────────────────
 export interface IOrderAddressDoc {
   fullName:   string
   phone:      string
@@ -12,15 +13,42 @@ export interface IOrderAddressDoc {
 }
 
 export interface IOrderItemDoc {
-  productId:  Types.ObjectId
-  title:      string
-  image?:     string
-  sku:        string
-  quantity:   number
-  itemPrice:  number
-  lineTotal:  number
+  productId:      Types.ObjectId
+  title:          string
+  image?:         string
+  sku:            string
+  quantity:       number
+  itemPrice:      number
+  lineTotal:      number
+  selectedSize?:  string
+  selectedColor?: string
 }
 
+export interface ITrackingEventDoc {
+  status:      string
+  location?:   string
+  description: string
+  timestamp:   Date
+}
+
+export interface IOrderTrackingDoc {
+  trackingNumber?:        string
+  carrier?:               string
+  trackingUrl?:           string
+  estimatedDeliveryDate?: Date
+  events:                 ITrackingEventDoc[]
+}
+
+export interface IReturnRequestDoc {
+  reason:        string
+  description?:  string
+  status:        'pending' | 'approved' | 'rejected' | 'completed'
+  requestedAt:   Date
+  resolvedAt?:   Date
+  refundAmount?: number
+}
+
+// ─── Main document interface ──────────────────────────────────────────────────
 export interface IOrderDocument extends Document {
   orderNumber:        string
   userId:             Types.ObjectId
@@ -37,13 +65,16 @@ export interface IOrderDocument extends Document {
   grandTotal:         number
   couponCode?:        string
   paymentStatus:      'pending' | 'paid' | 'failed' | 'refunded'
-  orderStatus:        'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+  orderStatus:        'pending' | 'confirmed' | 'processing' | 'shipped' | 'outForDelivery' | 'delivered' | 'cancelled' | 'returned' | 'refunded'
   paymentIntentId?:   string
   notes?:             string
+  tracking?:          IOrderTrackingDoc
+  returnRequest?:     IReturnRequestDoc
   createdAt:          Date
   updatedAt:          Date
 }
 
+// ─── Schemas ──────────────────────────────────────────────────────────────────
 const addressSchema = new mongoose.Schema<IOrderAddressDoc>(
   {
     fullName:   { type: String, required: true, trim: true },
@@ -59,13 +90,48 @@ const addressSchema = new mongoose.Schema<IOrderAddressDoc>(
 
 const orderItemSchema = new mongoose.Schema<IOrderItemDoc>(
   {
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    title:     { type: String, required: true, trim: true },
-    image:     { type: String },
-    sku:       { type: String, required: true, trim: true },
-    quantity:  { type: Number, required: true, min: 1 },
-    itemPrice: { type: Number, required: true, min: 0 },
-    lineTotal: { type: Number, required: true, min: 0 },
+    productId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    title:          { type: String, required: true, trim: true },
+    image:          { type: String },
+    sku:            { type: String, required: true, trim: true },
+    quantity:       { type: Number, required: true, min: 1 },
+    itemPrice:      { type: Number, required: true, min: 0 },
+    lineTotal:      { type: Number, required: true, min: 0 },
+    selectedSize:   { type: String, trim: true },
+    selectedColor:  { type: String, trim: true },
+  },
+  { _id: false },
+)
+
+const trackingEventSchema = new mongoose.Schema<ITrackingEventDoc>(
+  {
+    status:      { type: String, required: true },
+    location:    { type: String, trim: true },
+    description: { type: String, required: true, trim: true },
+    timestamp:   { type: Date, default: Date.now },
+  },
+  { _id: false },
+)
+
+const trackingSchema = new mongoose.Schema<IOrderTrackingDoc>(
+  {
+    trackingNumber:        { type: String, trim: true },
+    carrier:               { type: String, trim: true },
+    trackingUrl:           { type: String, trim: true },
+    estimatedDeliveryDate: { type: Date },
+    events:                { type: [trackingEventSchema], default: [] },
+  },
+  { _id: false },
+)
+
+const returnRequestSchema = new mongoose.Schema<IReturnRequestDoc>(
+  {
+    reason:       { type: String, required: true, trim: true },
+    description:  { type: String, maxlength: 1000, trim: true },
+    status:       { type: String, enum: ['pending', 'approved', 'rejected', 'completed'], default: 'pending' },
+    requestedAt:  { type: Date, default: Date.now },
+    resolvedAt:   { type: Date },
+    refundAmount: { type: Number, min: 0 },
   },
   { _id: false },
 )
@@ -90,6 +156,8 @@ const orderSchema = new mongoose.Schema<IOrderDocument>(
     orderStatus:        { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING, index: true },
     paymentIntentId:    { type: String },
     notes:              { type: String, maxlength: 500 },
+    tracking:           { type: trackingSchema },
+    returnRequest:      { type: returnRequestSchema },
   },
   {
     timestamps: true,
@@ -101,5 +169,6 @@ const orderSchema = new mongoose.Schema<IOrderDocument>(
 
 orderSchema.index({ userId: 1, createdAt: -1 })
 orderSchema.index({ paymentIntentId: 1 }, { sparse: true })
+orderSchema.index({ 'items.productId': 1 })
 
 export const Order = mongoose.model<IOrderDocument>('Order', orderSchema)

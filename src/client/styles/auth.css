@@ -14,14 +14,10 @@
 }
 
 .auth-header-logo {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-extrabold);
-  color: #fff;
-  letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
-  font-style: italic;
 }
-.auth-header-logo span { color: var(--color-brand-accent); }
 
 .auth-body {
   flex: 1;

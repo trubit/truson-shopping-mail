@@ -1,10 +1,11 @@
 import Stripe from 'stripe'
 import { getStripe, STRIPE_CURRENCY } from '../../config/stripe.js'
-import { Payment } from './payment.model.js'
-import { Order }   from '../order/order.model.js'
+import { Payment }  from './payment.model.js'
+import { Order }    from '../order/order.model.js'
+import { Product }  from '../product/product.model.js'
 import { AppError } from '../../middlewares/error.middleware.js'
-import { env }     from '../../config/env.js'
-import { logger }  from '../../utils/logger.js'
+import { env }      from '../../config/env.js'
+import { logger }   from '../../utils/logger.js'
 import type { RefundInput } from '../../../../src/shared/validators/payment.validators.js'
 
 export const getPaymentStatus = async (paymentIntentId: string, userId: string) => {
@@ -70,13 +71,38 @@ const onPaymentSucceeded = async (intent: Stripe.PaymentIntent) => {
     },
   )
 
-  await Order.findOneAndUpdate(
+  const order = await Order.findOneAndUpdate(
     { paymentIntentId: intent.id },
     {
-      paymentStatus: 'paid',
-      orderStatus:   'confirmed',
+      $set:  { paymentStatus: 'paid', orderStatus: 'confirmed' },
+      $push: {
+        'tracking.events': {
+          status:      'confirmed',
+          description: 'Payment confirmed — order is being processed',
+          timestamp:   new Date(),
+        },
+      },
     },
+    { returnDocument: 'after' },
   )
+
+  // Reduce stock atomically for each item — never let quantity go below 0
+  if (order && order.items.length > 0) {
+    const bulkOps = order.items.map((item) => ({
+      updateOne: {
+        filter: {
+          _id:           item.productId,
+          stockQuantity: { $gte: item.quantity },
+        },
+        update: { $inc: { stockQuantity: -item.quantity } },
+      },
+    }))
+    try {
+      await Product.bulkWrite(bulkOps, { ordered: false })
+    } catch (err) {
+      logger.warn('Inventory reduction partially failed', { orderId: order._id, err })
+    }
+  }
 
   logger.info('Payment succeeded', { intentId: intent.id })
 }

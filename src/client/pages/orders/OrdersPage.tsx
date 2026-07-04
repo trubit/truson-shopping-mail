@@ -1,163 +1,19 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  FiPackage, FiChevronDown, FiChevronUp, FiShoppingBag,
-  FiMapPin, FiTruck, FiCalendar, FiHash,
-} from 'react-icons/fi'
-import { useMyOrders } from '../../hooks/usePayment.js'
-import { formatCurrency, formatDate } from '../../../shared/helpers/index.js'
-import type { IOrder, OrderStatus, OrderPaymentStatus } from '../../../shared/types/index.js'
-
-const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
-  pending:    'badge-warning',
-  confirmed:  'badge-primary',
-  processing: 'badge-primary',
-  shipped:    'badge-primary',
-  delivered:  'badge-success',
-  cancelled:  'badge-danger',
-  refunded:   'badge-neutral',
-}
-
-const PAYMENT_STATUS_STYLE: Record<OrderPaymentStatus, string> = {
-  pending:  'badge-warning',
-  paid:     'badge-success',
-  failed:   'badge-danger',
-  refunded: 'badge-neutral',
-}
-
-function OrderCard({ order }: { order: IOrder }) {
-  const [expanded, setExpanded] = useState(false)
-
-  return (
-    <div className="order-card">
-      {/* Header row */}
-      <div className="order-card__header">
-        <div className="order-card__meta">
-          <div className="order-card__meta-item">
-            <FiHash size={13} />
-            <strong>{order.orderNumber}</strong>
-          </div>
-          <div className="order-card__meta-item">
-            <FiCalendar size={13} />
-            <span>{formatDate(order.createdAt)}</span>
-          </div>
-          <div className="order-card__meta-item">
-            <FiPackage size={13} />
-            <span>{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
-          </div>
-        </div>
-
-        <div className="order-card__badges">
-          <span className={`badge ${ORDER_STATUS_STYLE[order.orderStatus]}`}>
-            {order.orderStatus}
-          </span>
-          <span className={`badge ${PAYMENT_STATUS_STYLE[order.paymentStatus]}`}>
-            {order.paymentStatus}
-          </span>
-        </div>
-
-        <div className="order-card__total">
-          {formatCurrency(order.grandTotal)}
-        </div>
-
-        <button
-          className="order-card__toggle"
-          onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
-        >
-          {expanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-        </button>
-      </div>
-
-      {/* Thumbnail row (always visible) */}
-      <div className="order-card__thumbs">
-        {order.items.slice(0, 5).map((item, i) => (
-          <div key={i} className="order-card__thumb-wrap">
-            {item.image
-              ? <img src={item.image} alt={item.title} className="order-card__thumb" />
-              : <span className="order-card__thumb order-card__thumb--placeholder">🛍️</span>
-            }
-            {item.quantity > 1 && (
-              <span className="order-card__thumb-qty">×{item.quantity}</span>
-            )}
-          </div>
-        ))}
-        {order.items.length > 5 && (
-          <div className="order-card__thumb-more">+{order.items.length - 5}</div>
-        )}
-      </div>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div className="order-card__detail">
-          {/* Items */}
-          <ul className="order-card__items">
-            {order.items.map((item, i) => (
-              <li key={i} className="order-card__item">
-                <div className="order-card__item-img-wrap">
-                  {item.image
-                    ? <img src={item.image} alt={item.title} className="order-card__item-img" />
-                    : <span className="order-card__item-img order-card__item-img--placeholder">🛍️</span>
-                  }
-                </div>
-                <div className="order-card__item-info">
-                  <span className="order-card__item-title">{item.title}</span>
-                  <span className="order-card__item-sku">SKU: {item.sku}</span>
-                </div>
-                <div className="order-card__item-qty">×{item.quantity}</div>
-                <div className="order-card__item-total">{formatCurrency(item.lineTotal)}</div>
-              </li>
-            ))}
-          </ul>
-
-          {/* Pricing + Shipping side by side */}
-          <div className="order-card__bottom">
-            <div className="order-card__shipping">
-              <p className="order-card__section-label">
-                <FiMapPin size={13} /> Shipping to
-              </p>
-              <p>{order.shippingAddress.fullName}</p>
-              <p>{order.shippingAddress.street}</p>
-              <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
-              <p>{order.shippingAddress.country}</p>
-              <p className="order-card__shipping-method">
-                <FiTruck size={13} /> {order.shippingMethod}
-              </p>
-            </div>
-
-            <div className="order-card__pricing">
-              <div className="order-card__price-row">
-                <span>Subtotal</span>
-                <span>{formatCurrency(order.subtotal)}</span>
-              </div>
-              {order.discountAmount > 0 && (
-                <div className="order-card__price-row order-card__price-row--discount">
-                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
-                  <span>–{formatCurrency(order.discountAmount)}</span>
-                </div>
-              )}
-              <div className="order-card__price-row">
-                <span>Shipping</span>
-                <span>{order.shippingFee === 0 ? 'FREE' : formatCurrency(order.shippingFee)}</span>
-              </div>
-              <div className="order-card__price-row">
-                <span>Tax</span>
-                <span>{formatCurrency(order.taxAmount)}</span>
-              </div>
-              <div className="order-card__price-row order-card__price-row--total">
-                <span>Total</span>
-                <strong>{formatCurrency(order.grandTotal)}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+import { useState }   from 'react'
+import { Link }        from 'react-router-dom'
+import Form            from 'react-bootstrap/Form'
+import { FiShoppingBag } from 'react-icons/fi'
+import { useMyOrders } from '../../hooks/useOrders.js'
+import OrderCard       from '../../components/order/OrderCard/index.js'
+import { ORDER_STATUS } from '../../../shared/constants/index.js'
 
 export default function OrdersPage() {
-  const { data: orders, isLoading, isError } = useMyOrders()
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
+  const [page,         setPage]         = useState(1)
+
+  const { data, isLoading, isError } = useMyOrders({ status: statusFilter, page, limit: 10 })
+
+  const orders     = data?.orders      ?? []
+  const totalPages = data?.pagination?.totalPages ?? 1
 
   return (
     <div className="container section">
@@ -166,6 +22,19 @@ export default function OrdersPage() {
           <h1 className="orders-page__title">My Orders</h1>
           <p className="orders-page__subtitle">Track and manage all your purchases</p>
         </div>
+        <Form.Select
+          size="sm"
+          value={statusFilter ?? ''}
+          onChange={(e) => { setStatusFilter(e.target.value || undefined); setPage(1) }}
+          style={{ width: 'auto', minWidth: 160 }}
+        >
+          <option value="">All statuses</option>
+          {Object.values(ORDER_STATUS).map((s) => (
+            <option key={s} value={s}>
+              {s.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}
+            </option>
+          ))}
+        </Form.Select>
       </div>
 
       {isLoading && (
@@ -182,14 +51,16 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {!isLoading && !isError && (!orders || orders.length === 0) && (
+      {!isLoading && !isError && orders.length === 0 && (
         <div className="orders-page__empty">
           <div className="orders-page__empty-icon">
             <FiShoppingBag size={56} />
           </div>
           <h2 className="orders-page__empty-title">No orders yet</h2>
           <p className="orders-page__empty-text">
-            You haven't placed any orders yet. Start shopping!
+            {statusFilter
+              ? `No orders with status "${statusFilter}".`
+              : "You haven't placed any orders yet. Start shopping!"}
           </p>
           <Link to="/products" className="btn btn-primary btn-lg">
             Browse Products
@@ -197,12 +68,42 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {!isLoading && orders && orders.length > 0 && (
-        <div className="orders-page__list">
-          {orders.map((order) => (
-            <OrderCard key={order._id} order={order} />
-          ))}
-        </div>
+      {!isLoading && orders.length > 0 && (
+        <>
+          <div className="orders-page__list">
+            {orders.map((order) => (
+              <OrderCard key={order._id} order={order} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <nav className="pagination mt-4">
+              <button
+                className="pagination__btn"
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page <= 1}
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  className={`pagination__btn${p === page ? ' pagination__btn--active' : ''}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                className="pagination__btn"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= totalPages}
+              >
+                ›
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </div>
   )

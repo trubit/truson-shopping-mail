@@ -7,23 +7,27 @@ import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
 import type { OrderStatus, OrderPaymentStatus } from '../../../../shared/types/index.js'
 
 const ORDER_STATUS_ICON: Record<OrderStatus, React.ReactNode> = {
-  pending:    <FiClock size={14} />,
-  confirmed:  <FiCheckCircle size={14} />,
-  processing: <FiClock size={14} />,
-  shipped:    <FiTruck size={14} />,
-  delivered:  <FiCheckCircle size={14} />,
-  cancelled:  <FiXCircle size={14} />,
-  refunded:   <FiXCircle size={14} />,
+  pending:        <FiClock size={14} />,
+  confirmed:      <FiCheckCircle size={14} />,
+  processing:     <FiClock size={14} />,
+  shipped:        <FiTruck size={14} />,
+  outForDelivery: <FiTruck size={14} />,
+  delivered:      <FiCheckCircle size={14} />,
+  cancelled:      <FiXCircle size={14} />,
+  returned:       <FiXCircle size={14} />,
+  refunded:       <FiXCircle size={14} />,
 }
 
 const ORDER_STATUS_CLS: Record<OrderStatus, string> = {
-  pending:    'order-status--pending',
-  confirmed:  'order-status--confirmed',
-  processing: 'order-status--processing',
-  shipped:    'order-status--shipped',
-  delivered:  'order-status--delivered',
-  cancelled:  'order-status--cancelled',
-  refunded:   'order-status--refunded',
+  pending:        'order-status--pending',
+  confirmed:      'order-status--confirmed',
+  processing:     'order-status--processing',
+  shipped:        'order-status--shipped',
+  outForDelivery: 'order-status--shipped',
+  delivered:      'order-status--delivered',
+  cancelled:      'order-status--cancelled',
+  returned:       'order-status--cancelled',
+  refunded:       'order-status--cancelled',
 }
 
 const PAYMENT_CLS: Record<OrderPaymentStatus, string> = {
@@ -35,9 +39,10 @@ const PAYMENT_CLS: Record<OrderPaymentStatus, string> = {
 
 export default function ProfilePage() {
   const { data: user, isLoading: profileLoading, error } = useProfile()
-  const { data: orders, isLoading: ordersLoading } = useMyOrders()
+  const { data: ordersData, isLoading: ordersLoading } = useMyOrders()
 
-  const recentOrders = orders?.slice(0, 3) ?? []
+  const orders       = ordersData?.orders ?? []
+  const recentOrders = orders.slice(0, 3)
 
   if (profileLoading) return (
     <div>
@@ -52,8 +57,8 @@ export default function ProfilePage() {
     </div>
   )
 
-  const totalOrders = orders?.length ?? 0
-  const totalSpent  = orders?.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.grandTotal, 0) ?? 0
+  const totalOrders = ordersData?.pagination?.total ?? orders.length
+  const totalSpent  = orders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.grandTotal, 0)
   const memberSince = formatDate(user.createdAt, { year: 'numeric', month: 'long' })
 
   return (

@@ -1,30 +1,66 @@
-import type { IAddress } from './user.types.js'
+import type { IAddress }       from './user.types.js'
 import type { IServerCartItem } from './cart.types.js'
+import type { ReturnReason }    from '../constants/index.js'
 
+// ─── Status enums ──────────────────────────────────────────────────────────────
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
   | 'processing'
   | 'shipped'
+  | 'outForDelivery'
   | 'delivered'
   | 'cancelled'
+  | 'returned'
   | 'refunded'
 
 export type OrderPaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 
+export type ReturnStatus = 'pending' | 'approved' | 'rejected' | 'completed'
+
 import type { ShippingMethod } from './checkout.types.js'
 export type { ShippingMethod }
 
-export interface IOrderItem {
-  productId:  string
-  title:      string
-  image?:     string
-  sku:        string
-  quantity:   number
-  itemPrice:  number
-  lineTotal:  number
+// ─── Tracking ─────────────────────────────────────────────────────────────────
+export interface ITrackingEvent {
+  status:      OrderStatus
+  location?:   string
+  description: string
+  timestamp:   string
 }
 
+export interface IOrderTracking {
+  trackingNumber?:        string
+  carrier?:               string
+  trackingUrl?:           string
+  estimatedDeliveryDate?: string
+  events:                 ITrackingEvent[]
+}
+
+// ─── Return request ───────────────────────────────────────────────────────────
+export interface IReturnRequest {
+  reason:       ReturnReason
+  description?: string
+  status:       ReturnStatus
+  requestedAt:  string
+  resolvedAt?:  string
+  refundAmount?: number
+}
+
+// ─── Order item ───────────────────────────────────────────────────────────────
+export interface IOrderItem {
+  productId:     string
+  title:         string
+  image?:        string
+  sku:           string
+  quantity:      number
+  itemPrice:     number
+  lineTotal:     number
+  selectedSize?:  string
+  selectedColor?: string
+}
+
+// ─── Full order ───────────────────────────────────────────────────────────────
 export interface IOrder {
   _id:                string
   orderNumber:        string
@@ -45,6 +81,8 @@ export interface IOrder {
   orderStatus:        OrderStatus
   paymentIntentId?:   string
   notes?:             string
+  tracking?:          IOrderTracking
+  returnRequest?:     IReturnRequest
   createdAt:          string
   updatedAt:          string
 }

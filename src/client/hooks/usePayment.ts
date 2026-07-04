@@ -6,6 +6,9 @@ import { usePaymentStore } from '../store/paymentStore.js'
 import { useCheckoutStore } from '../store/checkoutStore.js'
 import type { IRefundRequest } from '../../shared/types/index.js'
 
+// Re-export from useOrders for backward compat
+export { useMyOrders, useOrder } from './useOrders.js'
+
 export const ORDER_KEY    = ['orders'] as const
 export const PAYMENT_KEY  = (id: string) => ['payment', 'status', id] as const
 
@@ -25,23 +28,6 @@ export const useCreateOrder = () => {
     },
   })
 }
-
-// Fetch all orders for the current user
-export const useMyOrders = () =>
-  useQuery({
-    queryKey: ORDER_KEY,
-    queryFn:  orderService.getMyOrders,
-    staleTime: 30_000,
-  })
-
-// Fetch a single order by ID
-export const useOrder = (orderId: string) =>
-  useQuery({
-    queryKey: [...ORDER_KEY, orderId],
-    queryFn:  () => orderService.getOrder(orderId),
-    enabled:  Boolean(orderId),
-    staleTime: 15_000,
-  })
 
 // Poll payment status
 export const usePaymentStatus = (paymentIntentId: string | null) =>

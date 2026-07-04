@@ -2,6 +2,7 @@ import mongoose, { type Document } from 'mongoose'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import type { UserRole } from '../../../../src/shared/types/auth.types.js'
+import { ROLES } from '../../../../src/shared/constants/index.js'
 
 export interface IAddressDoc {
   country?: string
@@ -89,7 +90,7 @@ const userSchema = new mongoose.Schema<IUserDocument>(
     language:     { type: String, default: 'en', maxlength: 10 },
     preferences:  { type: mongoose.Schema.Types.Mixed, default: {} },
     notificationSettings: { type: notificationSchema, default: () => ({}) },
-    role:         { type: String, enum: ['user', 'seller', 'admin'], default: 'user' },
+    role:         { type: String, enum: Object.values(ROLES), default: ROLES.USER },
     emailVerified:             { type: Boolean, default: false },
     emailVerificationToken:    { type: String, select: false },
     emailVerificationExpires:  { type: Date,   select: false },

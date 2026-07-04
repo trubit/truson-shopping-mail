@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { FiUser, FiEdit3, FiMapPin, FiSettings, FiLogOut, FiPackage, FiGrid } from 'react-icons/fi'
 import { useAuthStore } from '../../../store/authStore.js'
 import type { IUser } from '../../../../shared/types/user.types.js'
+import { ROLES } from '../../../../shared/constants/index.js'
 
 interface Props {
   user: IUser
@@ -52,7 +53,7 @@ export default function ProfileHeader({ user }: Props) {
           <FiSettings /> Settings
         </NavLink>
 
-        {(user.role === 'seller' || user.role === 'admin') && (
+        {(user.role === ROLES.SELLER || user.role === ROLES.ADMIN) && (
           <>
             <div className="profile-nav-divider" />
             <NavLink to="/seller/products" className={({ isActive }) => `profile-nav-item profile-nav-item--seller${isActive ? ' active' : ''}`}>

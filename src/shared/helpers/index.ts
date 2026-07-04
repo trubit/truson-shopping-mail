@@ -1,4 +1,6 @@
-export const formatCurrency = (amount: number, currency = 'USD'): string =>
+import { DEFAULT_CURRENCY } from '../constants/index.js'
+
+export const formatCurrency = (amount: number, currency = DEFAULT_CURRENCY): string =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
 
 export const formatDate = (date: string | Date, options?: Intl.DateTimeFormatOptions): string => {
