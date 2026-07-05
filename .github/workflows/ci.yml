@@ -1,8 +1,6 @@
 name: CI
 
 # Run on every push to main and on every PR that targets main.
-# This makes both jobs required status checks you can enforce
-# via GitHub → Settings → Branches → Branch protection rules.
 on:
   push:
     branches: [main]
@@ -10,7 +8,6 @@ on:
     branches: [main]
 
 # Cancel a previous run on the same branch if a newer commit arrives.
-# Saves CI minutes on rapid pushes.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -29,10 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm          # caches ~/.npm between runs
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci           # clean install — respects package-lock.json exactly
+        run: npm ci
 
       - name: TypeScript type check
         run: npm run typecheck
@@ -45,6 +42,11 @@ jobs:
     name: Server Tests
     runs-on: ubuntu-latest
 
+    # Make the binary cache path available to every step in this job.
+    # /home/runner is always the home directory on GitHub-hosted Ubuntu runners.
+    env:
+      MONGOMS_BIN: /home/runner/.cache/mongodb-binaries
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -56,11 +58,10 @@ jobs:
           cache: npm
 
       # Cache the MongoDB binary that mongodb-memory-server downloads.
-      # Key includes package-lock hash so it refreshes when the dep version changes.
       - name: Cache MongoDB binary
         uses: actions/cache@v4
         with:
-          path: ~/.cache/mongodb-binaries
+          path: ${{ env.MONGOMS_BIN }}
           key: ${{ runner.os }}-mongoms-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-mongoms-
@@ -71,7 +72,7 @@ jobs:
       - name: Run server tests
         run: npm run test:server
         env:
-          MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-binaries
+          MONGOMS_DOWNLOAD_DIR: ${{ env.MONGOMS_BIN }}
           NODE_ENV: test
           # Dummy secrets — only used by JWT helpers in test scope.
           # Real secrets live in GitHub → Settings → Secrets and never here.
