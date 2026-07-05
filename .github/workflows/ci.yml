@@ -76,5 +76,5 @@ jobs:
           NODE_ENV: test
           # Dummy secrets — only used by JWT helpers in test scope.
           # Real secrets live in GitHub → Settings → Secrets and never here.
-          JWT_SECRET: ci-test-jwt-secret
+          JWT_ACCESS_SECRET: ci-test-jwt-access-secret
           JWT_REFRESH_SECRET: ci-test-jwt-refresh-secret
