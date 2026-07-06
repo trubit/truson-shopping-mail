@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { ICreateOrderResponse, IOrder } from '../../shared/types/index.js'
+import { DEFAULT_CURRENCY } from '../../shared/constants/index.js'
 
 export type PaymentStep = 'form' | 'processing' | 'success' | 'failed'
 
@@ -31,7 +32,7 @@ const initial = {
   orderNumber:  null,
   clientSecret: null,
   amount:       null,
-  currency:     'usd',
+  currency:     DEFAULT_CURRENCY.toLowerCase(),
   order:        null,
   step:         'form' as PaymentStep,
   errorMessage: null,

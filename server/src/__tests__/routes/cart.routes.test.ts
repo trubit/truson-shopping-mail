@@ -20,8 +20,6 @@ vi.mock('ioredis', () => ({
 vi.mock('../../utils/email.js', () => ({
   sendVerificationEmail:  vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
-  sendWelcomeEmail:       vi.fn().mockResolvedValue(undefined),
-  initEmail:              vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../../middlewares/rateLimiter.middleware.js', () => ({

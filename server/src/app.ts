@@ -15,7 +15,7 @@ import cartRoutes         from './routes/cart.routes.js'
 import checkoutRoutes     from './routes/checkout.routes.js'
 import orderRoutes        from './routes/order.routes.js'
 import paymentRoutes      from './routes/payment.routes.js'
-import notificationRoutes from './routes/notification.routes.js'
+import dashboardRoutes    from './routes/dashboard.routes.js'
 import adminRoutes        from './routes/admin.routes.js'
 import * as paymentController from './modules/payment/payment.controller.js'
 
@@ -62,7 +62,7 @@ app.use(`${API_PREFIX}/cart`,          cartRoutes)
 app.use(`${API_PREFIX}/checkout`,      checkoutRoutes)
 app.use(`${API_PREFIX}/orders`,        orderRoutes)
 app.use(`${API_PREFIX}/payment`,       paymentRoutes)
-app.use(`${API_PREFIX}/notifications`, notificationRoutes)
+app.use(`${API_PREFIX}/dashboard`,     dashboardRoutes)
 app.use(`${API_PREFIX}/admin`,         adminRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────

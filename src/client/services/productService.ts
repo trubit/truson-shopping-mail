@@ -88,4 +88,8 @@ export const productService = {
     const res = await api.get<ApiResponse<IReview[]>>(`/products/${productId}/reviews?page=${page}&limit=${limit}`)
     return { data: res.data.data ?? [], pagination: res.data.pagination as ProductsResponse['pagination'] }
   },
+
+  deleteReview: async (productId: string, reviewId: string): Promise<void> => {
+    await api.delete(`/products/${productId}/reviews/${reviewId}`)
+  },
 }

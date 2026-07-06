@@ -1,24 +1,19 @@
 import { Router } from 'express'
 import { authenticate } from '../middlewares/auth.middleware.js'
+import {
+  getNotifications,
+  getUnreadCount,
+  markRead,
+  markAllRead,
+} from '../modules/dashboard/dashboard.controller.js'
 
 const router = Router()
 
 router.use(authenticate)
 
-router.get('/unread-count', (_req, res) => {
-  res.json({ success: true, data: { count: 0 } })
-})
-
-router.get('/', (_req, res) => {
-  res.json({ success: true, data: { notifications: [], total: 0 } })
-})
-
-router.put('/:id/read', (req, res) => {
-  res.json({ success: true, data: { id: req.params.id } })
-})
-
-router.put('/read-all', (_req, res) => {
-  res.json({ success: true, data: null })
-})
+router.get('/unread-count', getUnreadCount)
+router.get('/',             getNotifications)
+router.put('/read-all',     markAllRead)
+router.put('/:id/read',    markRead)
 
 export default router

@@ -4,6 +4,8 @@ import { Payment }  from './payment.model.js'
 import { Order }    from '../order/order.model.js'
 import { Product }  from '../product/product.model.js'
 import { AppError } from '../../middlewares/error.middleware.js'
+import { emitToUser } from '../../sockets/index.js'
+import { createNotification } from '../notification/notification.model.js'
 import { env }      from '../../config/env.js'
 import { logger }   from '../../utils/logger.js'
 import type { RefundInput } from '../../../../src/shared/validators/payment.validators.js'
@@ -86,6 +88,20 @@ const onPaymentSucceeded = async (intent: Stripe.PaymentIntent) => {
     { returnDocument: 'after' },
   )
 
+  // Push real-time order confirmation to user
+  if (order) {
+    const userId = order.userId.toString()
+    const notif  = await createNotification({
+      userId,
+      type:    'order',
+      title:   'Payment confirmed',
+      message: `Your payment for order #${order.orderNumber} was confirmed. Your order is now being processed.`,
+      link:    `/orders/${order._id}`,
+    }).catch(() => null)
+    if (notif) emitToUser(userId, 'notification:new', notif)
+    emitToUser(userId, 'order:updated', { orderId: order._id, orderStatus: 'confirmed', paymentStatus: 'paid' })
+  }
+
   // Reduce stock atomically for each item — never let quantity go below 0
   if (order && order.items.length > 0) {
     const bulkOps = order.items.map((item) => ({
@@ -113,10 +129,24 @@ const onPaymentFailed = async (intent: Stripe.PaymentIntent) => {
     { status: 'failed', stripeEventData: intent },
   )
 
-  await Order.findOneAndUpdate(
+  const failedOrder = await Order.findOneAndUpdate(
     { paymentIntentId: intent.id },
     { paymentStatus: 'failed', orderStatus: 'cancelled' },
+    { returnDocument: 'after' },
   )
+
+  if (failedOrder) {
+    const userId = failedOrder.userId.toString()
+    const notif  = await createNotification({
+      userId,
+      type:    'order',
+      title:   'Payment failed',
+      message: `Payment for order #${failedOrder.orderNumber} was unsuccessful. Please try again or use a different payment method.`,
+      link:    `/orders/${failedOrder._id}`,
+    }).catch(() => null)
+    if (notif) emitToUser(userId, 'notification:new', notif)
+    emitToUser(userId, 'order:updated', { orderId: failedOrder._id, orderStatus: 'cancelled', paymentStatus: 'failed' })
+  }
 
   logger.warn('Payment failed', { intentId: intent.id })
 }
@@ -142,10 +172,24 @@ const onChargeRefunded = async (charge: Stripe.Charge) => {
     { status: 'refunded', stripeEventData: charge },
   )
 
-  await Order.findOneAndUpdate(
+  const refundedOrder = await Order.findOneAndUpdate(
     { paymentIntentId: intentId },
     { paymentStatus: 'refunded', orderStatus: 'refunded' },
+    { returnDocument: 'after' },
   )
+
+  if (refundedOrder) {
+    const userId = refundedOrder.userId.toString()
+    const notif  = await createNotification({
+      userId,
+      type:    'order',
+      title:   'Refund processed',
+      message: `Your refund for order #${refundedOrder.orderNumber} has been processed and will appear in your account shortly.`,
+      link:    `/orders/${refundedOrder._id}`,
+    }).catch(() => null)
+    if (notif) emitToUser(userId, 'notification:new', notif)
+    emitToUser(userId, 'order:updated', { orderId: refundedOrder._id, orderStatus: 'refunded', paymentStatus: 'refunded' })
+  }
 
   logger.info('Charge refunded', { intentId })
 }

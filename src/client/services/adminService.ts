@@ -19,7 +19,7 @@ interface PagedResponse<T> {
 }
 
 export const adminService = {
-  getStats: (): Promise<{ data: AdminStats }> =>
+  getStats: (): Promise<{ success: boolean; message: string; data: AdminStats }> =>
     api.get('/admin/stats').then(r => r.data),
 
   getUsers: (params?: Record<string, string>): Promise<PagedResponse<IUser>> =>

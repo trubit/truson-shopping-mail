@@ -6,10 +6,10 @@ import { usePaymentStore } from '../store/paymentStore.js'
 import { useCheckoutStore } from '../store/checkoutStore.js'
 import type { IRefundRequest } from '../../shared/types/index.js'
 
+import { ORDER_KEY } from './useOrders.js'
 // Re-export from useOrders for backward compat
-export { useMyOrders, useOrder } from './useOrders.js'
+export { useMyOrders, useOrder, ORDER_KEY } from './useOrders.js'
 
-export const ORDER_KEY    = ['orders'] as const
 export const PAYMENT_KEY  = (id: string) => ['payment', 'status', id] as const
 
 // Create order + initialize Stripe PaymentIntent
@@ -37,7 +37,7 @@ export const usePaymentStatus = (paymentIntentId: string | null) =>
     enabled:  Boolean(paymentIntentId),
     refetchInterval: (query) => {
       const status = query.state.data?.paymentStatus
-      if (status === 'completed' || status === 'failed') return false
+      if (status === 'completed' || status === 'failed' || status === 'refunded') return false
       return 3000
     },
     staleTime: 0,

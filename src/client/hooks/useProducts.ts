@@ -117,3 +117,14 @@ export const useAddReview = (productId: string) => {
     },
   })
 }
+
+export const useDeleteReview = (productId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (reviewId: string) => productService.deleteReview(productId, reviewId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: PRODUCT_KEYS.reviews(productId, 1) })
+      qc.invalidateQueries({ queryKey: PRODUCT_KEYS.detail(productId) })
+    },
+  })
+}

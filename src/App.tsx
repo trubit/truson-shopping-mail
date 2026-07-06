@@ -10,6 +10,7 @@ import './client/styles/payment.css'
 import './client/styles/orders.css'
 import './client/styles/seller.css'
 import './client/styles/admin.css'
+import './client/styles/dashboard.css'
 
 function ThemeSync() {
   const theme = useThemeStore((s) => s.theme)

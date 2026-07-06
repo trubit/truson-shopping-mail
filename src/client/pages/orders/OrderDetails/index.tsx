@@ -1,52 +1,99 @@
-import { useState }      from 'react'
+import { useState }  from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import Row              from 'react-bootstrap/Row'
-import Col              from 'react-bootstrap/Col'
-import Button           from 'react-bootstrap/Button'
-import Alert            from 'react-bootstrap/Alert'
-import { FiArrowLeft, FiMapPin, FiRefreshCw, FiXCircle } from 'react-icons/fi'
-import { useOrder, useCancelOrder }         from '../../../hooks/useOrders.js'
+import {
+  FiArrowLeft, FiMapPin, FiRefreshCw, FiXCircle, FiNavigation,
+  FiPackage, FiShoppingBag, FiPhone, FiClock, FiFileText,
+  FiChevronRight,
+} from 'react-icons/fi'
+import { useOrder, useCancelOrder }             from '../../../hooks/useOrders.js'
 import { OrderStatusBadge, PaymentStatusBadge } from '../../../components/order/OrderStatus/index.js'
 import OrderTimeline    from '../../../components/order/OrderTimeline/index.js'
 import TrackingInfo     from '../../../components/order/TrackingInfo/index.js'
 import OrderSummary     from '../../../components/order/OrderSummary/index.js'
 import ReturnRequestForm from '../../../components/order/ReturnRequestForm/index.js'
-import { formatCurrency, formatDate }       from '../../../../shared/helpers/index.js'
-import { CANCELLABLE_STATUSES, RETURNABLE_STATUSES, RETURN_WINDOW_DAYS } from '../../../../shared/constants/index.js'
+import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
+import {
+  CANCELLABLE_STATUSES,
+  RETURNABLE_STATUSES,
+  RETURN_WINDOW_DAYS,
+} from '../../../../shared/constants/index.js'
+
+const STATUS_ACCENT: Record<string, string> = {
+  pending:          '#FF9900',
+  confirmed:        '#007185',
+  processing:       '#0066c0',
+  shipped:          '#8956FF',
+  outForDelivery:   '#067D62',
+  delivered:        '#067D62',
+  cancelled:        '#CC0C39',
+  returned:         '#CC0C39',
+  refunded:         '#565959',
+}
 
 function isWithinReturnWindow(createdAt: string) {
   return (Date.now() - new Date(createdAt).getTime()) / 86_400_000 <= RETURN_WINDOW_DAYS
 }
 
+function OrderDetailSkeleton() {
+  return (
+    <div className="od-page">
+      <div className="od-hero od-hero--loading">
+        <div className="container">
+          <div className="od-skeleton" style={{ height: 20, width: 80, marginBottom: 16 }} />
+          <div className="od-skeleton" style={{ height: 36, width: 340, marginBottom: 8 }} />
+          <div className="od-skeleton" style={{ height: 16, width: 160, marginBottom: 24 }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div className="od-skeleton" style={{ height: 28, width: 100 }} />
+            <div className="od-skeleton" style={{ height: 28, width: 120 }} />
+          </div>
+        </div>
+      </div>
+      <div className="container od-body">
+        <div className="od-grid">
+          <div>
+            {[180, 260, 160].map((h, i) => (
+              <div key={i} className="od-skeleton" style={{ height: h, marginBottom: 16, borderRadius: 8 }} />
+            ))}
+          </div>
+          <div>
+            {[140, 180].map((h, i) => (
+              <div key={i} className="od-skeleton" style={{ height: h, marginBottom: 16, borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function OrderDetails() {
-  const { id }    = useParams<{ id: string }>()
-  const navigate  = useNavigate()
+  const { id }   = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [showReturn, setShowReturn] = useState(false)
 
   const { data: order, isLoading, isError } = useOrder(id ?? '')
   const { mutate: cancelOrder, isPending: cancelling, error: cancelError } = useCancelOrder()
 
-  if (isLoading) {
+  if (isLoading) return <OrderDetailSkeleton />
+
+  if (isError || !order) {
     return (
-      <div className="container section">
-        <div className="order-details__skeleton">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton mb-3" style={{ height: 120 }} />)}
+      <div className="container od-error-wrap">
+        <div className="od-error-card">
+          <FiPackage size={48} className="od-error-icon" />
+          <h2 className="od-error-title">Order not found</h2>
+          <p className="od-error-text">
+            We couldn't load this order. It may have been removed or you may not have access.
+          </p>
+          <Link to="/orders" className="od-btn od-btn--primary">
+            <FiArrowLeft size={14} /> Back to Orders
+          </Link>
         </div>
       </div>
     )
   }
 
-  if (isError || !order) {
-    return (
-      <div className="container section">
-        <Alert variant="danger">Order not found or failed to load.</Alert>
-        <Link to="/orders" className="btn btn-outline-secondary mt-2">
-          <FiArrowLeft size={14} className="me-1" /> Back to Orders
-        </Link>
-      </div>
-    )
-  }
-
+  const accent   = STATUS_ACCENT[order.orderStatus] ?? '#131921'
   const canCancel = (CANCELLABLE_STATUSES as readonly string[]).includes(order.orderStatus)
   const canReturn =
     (RETURNABLE_STATUSES as readonly string[]).includes(order.orderStatus) &&
@@ -54,163 +101,260 @@ export default function OrderDetails() {
     !order.returnRequest
 
   const handleCancel = () => {
-    if (!window.confirm('Cancel this order?')) return
+    if (!window.confirm('Are you sure you want to cancel this order?')) return
     cancelOrder({ orderId: order._id }, { onSuccess: () => navigate('/orders') })
   }
 
   return (
-    <div className="container section order-details">
-      {/* ── Header ───────────────────────────────────────── */}
-      <div className="order-details__header">
-        <div className="order-details__back">
-          <Button variant="link" className="p-0" onClick={() => navigate(-1)}>
-            <FiArrowLeft size={14} className="me-1" />Back
-          </Button>
-        </div>
-        <div className="order-details__title-block">
-          <h1 className="order-details__title">Order #{order.orderNumber}</h1>
-          <span className="order-details__date">{formatDate(order.createdAt, { dateStyle: 'long' })}</span>
-        </div>
-        <div className="order-details__header-badges">
-          <OrderStatusBadge status={order.orderStatus} showIcon />
-          <PaymentStatusBadge status={order.paymentStatus} />
-        </div>
-        <div className="order-details__header-actions">
-          {canCancel && (
-            <Button variant="outline-danger" size="sm" onClick={handleCancel} disabled={cancelling}>
-              <FiXCircle size={13} className="me-1" /> {cancelling ? 'Cancelling…' : 'Cancel Order'}
-            </Button>
+    <div className="od-page">
+
+      {/* ══════════ HERO HEADER ══════════ */}
+      <div className="od-hero" style={{ '--od-accent': accent } as React.CSSProperties}>
+        <div className="od-hero__accent-bar" />
+        <div className="container">
+
+          {/* Back */}
+          <button className="od-back" onClick={() => navigate(-1)}>
+            <FiArrowLeft size={14} />
+            Back to Orders
+          </button>
+
+          <div className="od-hero__inner">
+            {/* Title block */}
+            <div className="od-hero__info">
+              <h1 className="od-hero__title">Order #{order.orderNumber}</h1>
+              <p className="od-hero__date">
+                <FiClock size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                Placed on {formatDate(order.createdAt, { dateStyle: 'long' })}
+              </p>
+              <div className="od-hero__badges">
+                <OrderStatusBadge status={order.orderStatus} showIcon />
+                <PaymentStatusBadge status={order.paymentStatus} />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="od-hero__actions">
+              <Link to={`/orders/${order._id}/track`} className="od-btn od-btn--ghost">
+                <FiNavigation size={13} /> Track Order
+              </Link>
+              {canReturn && (
+                <button
+                  className="od-btn od-btn--outline-warning"
+                  onClick={() => setShowReturn(true)}
+                >
+                  <FiRefreshCw size={13} /> Return
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  className="od-btn od-btn--danger"
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                >
+                  <FiXCircle size={13} />
+                  {cancelling ? 'Cancelling…' : 'Cancel Order'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Cancel error */}
+          {cancelError && (
+            <div className="od-alert od-alert--error">
+              {(cancelError as any)?.response?.data?.message
+                ?? (cancelError as Error)?.message
+                ?? 'Failed to cancel order'}
+            </div>
           )}
-          {canReturn && (
-            <Button variant="outline-warning" size="sm" onClick={() => setShowReturn(true)}>
-              <FiRefreshCw size={13} className="me-1" /> Request Return
-            </Button>
-          )}
-          <Link
-            to={`/orders/${order._id}/track`}
-            className="btn btn-outline-primary btn-sm"
-          >
-            <FiMapPin size={13} className="me-1" /> Track
-          </Link>
         </div>
       </div>
 
-      {cancelError && (
-        <Alert variant="danger" className="mb-3">
-          {(cancelError as any)?.response?.data?.message ?? (cancelError as Error)?.message ?? 'Failed to cancel order'}
-        </Alert>
-      )}
+      {/* ══════════ BODY ══════════ */}
+      <div className="container od-body">
+        <div className="od-grid">
 
-      <Row className="g-4">
-        {/* ── Left column ──────────────────────────────── */}
-        <Col lg={8}>
-          {/* Timeline */}
-          <div className="order-details__section">
-            <OrderTimeline
-              events={order.tracking?.events ?? []}
-              orderStatus={order.orderStatus}
-            />
-          </div>
+          {/* ── Left column ─────────────────────────────────── */}
+          <div className="od-col-main">
 
-          {/* Items */}
-          <div className="order-details__section">
-            <h3 className="order-details__section-title">Items ({order.items.length})</h3>
-            <ul className="order-details__items">
-              {order.items.map((item, i) => (
-                <li key={i} className="order-details__item">
-                  {item.image && (
-                    <img src={item.image} alt={item.title} className="order-details__item-img" />
-                  )}
-                  <div className="order-details__item-info">
-                    <Link to={`/products/${item.productId}`} className="order-details__item-title">
-                      {item.title}
-                    </Link>
-                    <div className="order-details__item-meta">
-                      <span>SKU: {item.sku}</span>
-                      {item.selectedSize  && <span>Size: {item.selectedSize}</span>}
-                      {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+            {/* Timeline */}
+            <div className="od-card">
+              <div className="od-card__head">
+                <span className="od-card__head-dot" style={{ background: accent }} />
+                <h2 className="od-card__title">Shipment History</h2>
+              </div>
+              <OrderTimeline
+                events={order.tracking?.events ?? []}
+                orderStatus={order.orderStatus}
+              />
+            </div>
+
+            {/* Items */}
+            <div className="od-card">
+              <div className="od-card__head">
+                <span className="od-card__head-dot" style={{ background: accent }} />
+                <h2 className="od-card__title">
+                  <FiShoppingBag size={15} style={{ marginRight: 6 }} />
+                  Items Ordered
+                </h2>
+                <span className="od-card__head-count">{order.items.length}</span>
+              </div>
+
+              <ul className="od-items">
+                {order.items.map((item, i) => (
+                  <li key={i} className="od-item">
+                    <div className="od-item__img-wrap">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="od-item__img"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        />
+                      ) : (
+                        <div className="od-item__img-placeholder">
+                          <FiPackage size={20} />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="order-details__item-qty">×{item.quantity}</div>
-                  <div className="order-details__item-total">{formatCurrency(item.lineTotal)}</div>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          {/* Shipping address */}
-          <div className="order-details__section order-details__address-box">
-            <h3 className="order-details__section-title">
-              <FiMapPin size={14} className="me-1" /> Shipping Address
-            </h3>
-            <p>{order.shippingAddress.fullName}</p>
-            <p>{order.shippingAddress.street}</p>
-            <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
-            <p>{order.shippingAddress.country}</p>
-            <p className="order-details__address-phone">{order.shippingAddress.phone}</p>
-          </div>
+                    <div className="od-item__info">
+                      <Link to={`/products/${item.productId}`} className="od-item__title">
+                        {item.title}
+                      </Link>
+                      <div className="od-item__chips">
+                        <span className="od-chip">SKU: {item.sku}</span>
+                        {item.selectedSize  && <span className="od-chip">Size: {item.selectedSize}</span>}
+                        {item.selectedColor && <span className="od-chip od-chip--color">{item.selectedColor}</span>}
+                      </div>
+                    </div>
 
-          {/* Return request status (if any) */}
-          {order.returnRequest && (
-            <div className="order-details__section">
-              <h3 className="order-details__section-title">Return Request</h3>
-              <div className="order-details__return-info">
-                <div className="order-details__return-row">
-                  <span>Status</span>
-                  <span className={`badge badge-${order.returnRequest.status === 'approved' ? 'success' : order.returnRequest.status === 'rejected' ? 'danger' : 'warning'}`}>
+                    <div className="od-item__right">
+                      <span className="od-item__qty">×{item.quantity}</span>
+                      <span className="od-item__total">{formatCurrency(item.lineTotal)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Shipping Address */}
+            <div className="od-card od-address-card">
+              <div className="od-card__head">
+                <span className="od-card__head-dot" style={{ background: accent }} />
+                <h2 className="od-card__title">
+                  <FiMapPin size={15} style={{ marginRight: 6 }} />
+                  Shipping Address
+                </h2>
+              </div>
+              <div className="od-address">
+                <div className="od-address__name">{order.shippingAddress.fullName}</div>
+                <div className="od-address__lines">
+                  <span>{order.shippingAddress.street}</span>
+                  <span>
+                    {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                    {order.shippingAddress.postalCode}
+                  </span>
+                  <span>{order.shippingAddress.country}</span>
+                </div>
+                <div className="od-address__phone">
+                  <FiPhone size={12} />
+                  {order.shippingAddress.phone}
+                </div>
+              </div>
+            </div>
+
+            {/* Return Request */}
+            {order.returnRequest && (
+              <div className="od-card od-return-card">
+                <div className="od-card__head">
+                  <span className="od-card__head-dot" style={{ background: '#CC0C39' }} />
+                  <h2 className="od-card__title">
+                    <FiRefreshCw size={15} style={{ marginRight: 6 }} />
+                    Return Request
+                  </h2>
+                  <span
+                    className={`od-return-status od-return-status--${order.returnRequest.status}`}
+                  >
                     {order.returnRequest.status}
                   </span>
                 </div>
-                <div className="order-details__return-row">
-                  <span>Reason</span>
-                  <span>{order.returnRequest.reason.replace(/_/g, ' ')}</span>
-                </div>
-                {order.returnRequest.description && (
-                  <div className="order-details__return-row">
-                    <span>Details</span>
-                    <span>{order.returnRequest.description}</span>
+                <div className="od-return-grid">
+                  <div className="od-return-row">
+                    <span className="od-return-label">Reason</span>
+                    <span className="od-return-value">
+                      {order.returnRequest.reason.replace(/_/g, ' ')}
+                    </span>
                   </div>
-                )}
-                <div className="order-details__return-row">
-                  <span>Requested</span>
-                  <span>{formatDate(order.returnRequest.requestedAt)}</span>
-                </div>
-                {order.returnRequest.refundAmount && (
-                  <div className="order-details__return-row">
-                    <span>Refund Amount</span>
-                    <strong>{formatCurrency(order.returnRequest.refundAmount)}</strong>
+                  {order.returnRequest.description && (
+                    <div className="od-return-row">
+                      <span className="od-return-label">Details</span>
+                      <span className="od-return-value">{order.returnRequest.description}</span>
+                    </div>
+                  )}
+                  <div className="od-return-row">
+                    <span className="od-return-label">Requested</span>
+                    <span className="od-return-value">
+                      {formatDate(order.returnRequest.requestedAt)}
+                    </span>
                   </div>
-                )}
+                  {order.returnRequest.refundAmount && (
+                    <div className="od-return-row">
+                      <span className="od-return-label">Refund Amount</span>
+                      <strong className="od-return-amount">
+                        {formatCurrency(order.returnRequest.refundAmount)}
+                      </strong>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </Col>
+            )}
+          </div>
 
-        {/* ── Right column ─────────────────────────────── */}
-        <Col lg={4}>
-          <div className="order-details__sidebar">
-            {/* Tracking info */}
+          {/* ── Right column ─────────────────────────────────── */}
+          <div className="od-col-side">
+
+            {/* Tracking Info */}
             {order.tracking && (
-              <div className="order-details__section">
+              <div className="od-card">
+                <div className="od-card__head">
+                  <span className="od-card__head-dot" style={{ background: accent }} />
+                  <h2 className="od-card__title">Shipping & Tracking</h2>
+                </div>
                 <TrackingInfo tracking={order.tracking} shippingMethod={order.shippingMethod} />
               </div>
             )}
 
             {/* Price summary */}
-            <div className="order-details__section">
+            <div className="od-card od-summary-card">
+              <div className="od-card__head">
+                <span className="od-card__head-dot" style={{ background: accent }} />
+                <h2 className="od-card__title">Order Summary</h2>
+              </div>
               <OrderSummary order={order} />
+              <div className="od-summary-cta">
+                <Link to="/orders" className="od-summary-cta__link">
+                  View all orders <FiChevronRight size={13} />
+                </Link>
+              </div>
             </div>
 
             {/* Notes */}
             {order.notes && (
-              <div className="order-details__section">
-                <h3 className="order-details__section-title">Order Notes</h3>
-                <p className="order-details__notes">{order.notes}</p>
+              <div className="od-card">
+                <div className="od-card__head">
+                  <span className="od-card__head-dot" style={{ background: accent }} />
+                  <h2 className="od-card__title">
+                    <FiFileText size={15} style={{ marginRight: 6 }} />
+                    Order Notes
+                  </h2>
+                </div>
+                <p className="od-notes">{order.notes}</p>
               </div>
             )}
           </div>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       <ReturnRequestForm
         orderId={order._id}

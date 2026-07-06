@@ -46,6 +46,16 @@ const SellerProductCreate = lazy(() => import('../pages/seller/SellerProductCrea
 const SellerProductEdit   = lazy(() => import('../pages/seller/SellerProductEdit.js'))
 const SellerOrders        = lazy(() => import('../pages/seller/SellerOrders/index.js'))
 
+// Dashboard pages
+const DashboardLayout     = lazy(() => import('../pages/dashboard/DashboardLayout/index.js'))
+const DashboardPage       = lazy(() => import('../pages/dashboard/DashboardPage/index.js'))
+const WishlistPage        = lazy(() => import('../pages/dashboard/WishlistPage/index.js'))
+const NotificationsPage   = lazy(() => import('../pages/dashboard/NotificationsPage/index.js'))
+const PaymentHistoryPage  = lazy(() => import('../pages/dashboard/PaymentHistoryPage/index.js'))
+const RecentlyViewedPage  = lazy(() => import('../pages/dashboard/RecentlyViewedPage/index.js'))
+const AccountSettingsPage = lazy(() => import('../pages/dashboard/AccountSettingsPage/index.js'))
+const SecurityPage        = lazy(() => import('../pages/dashboard/SecurityPage/index.js'))
+
 // Admin pages
 const AdminLayout    = lazy(() => import('../pages/admin/AdminLayout/index.js'))
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard/index.js'))
@@ -118,6 +128,17 @@ export default function AppRouter() {
             <Route path="users"       element={<AdminUsers />} />
             <Route path="products"    element={<AdminProducts />} />
             <Route path="orders"      element={<AdminOrders />} />
+          </Route>
+
+          {/* User Dashboard — nested layout */}
+          <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
+            <Route index                    element={<DashboardPage />} />
+            <Route path="wishlist"          element={<WishlistPage />} />
+            <Route path="notifications"     element={<NotificationsPage />} />
+            <Route path="payments"          element={<PaymentHistoryPage />} />
+            <Route path="recently-viewed"   element={<RecentlyViewedPage />} />
+            <Route path="account"           element={<AccountSettingsPage />} />
+            <Route path="security"          element={<SecurityPage />} />
           </Route>
 
           {/* Profile — nested layout with sidebar, inside MainLayout for navbar */}
