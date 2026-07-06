@@ -41,10 +41,15 @@ const TrackOrder   = lazy(() => import('../pages/orders/TrackOrder/index.js'))
 const ReturnOrder  = lazy(() => import('../pages/orders/ReturnOrder/index.js'))
 
 // Seller pages
+const SellerLayout        = lazy(() => import('../pages/seller/SellerLayout/index.js'))
+const SellerDashboard     = lazy(() => import('../pages/seller/SellerDashboard/index.js'))
 const SellerProducts      = lazy(() => import('../pages/seller/SellerProducts.js'))
 const SellerProductCreate = lazy(() => import('../pages/seller/SellerProductCreate.js'))
 const SellerProductEdit   = lazy(() => import('../pages/seller/SellerProductEdit.js'))
 const SellerOrders        = lazy(() => import('../pages/seller/SellerOrders/index.js'))
+const SellerAnalytics     = lazy(() => import('../pages/seller/SellerAnalytics/index.js'))
+const SellerSettings      = lazy(() => import('../pages/seller/SellerSettings/index.js'))
+const SellerPayouts       = lazy(() => import('../pages/seller/SellerPayouts/index.js'))
 
 // Dashboard pages
 const DashboardLayout     = lazy(() => import('../pages/dashboard/DashboardLayout/index.js'))
@@ -115,11 +120,17 @@ export default function AppRouter() {
           <Route path="/payment/success"    element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
           <Route path="/payment/failed"     element={<PrivateRoute><PaymentFailed /></PrivateRoute>} />
 
-          {/* Seller dashboard */}
-          <Route path="/seller/products"             element={<SellerRoute><SellerProducts /></SellerRoute>} />
-          <Route path="/seller/products/create"      element={<SellerRoute><SellerProductCreate /></SellerRoute>} />
-          <Route path="/seller/products/edit/:id"    element={<SellerRoute><SellerProductEdit /></SellerRoute>} />
-          <Route path="/seller/orders"               element={<SellerRoute><SellerOrders /></SellerRoute>} />
+          {/* Seller dashboard — nested layout */}
+          <Route path="/seller" element={<SellerRoute><SellerLayout /></SellerRoute>}>
+            <Route index                       element={<SellerDashboard />} />
+            <Route path="products"             element={<SellerProducts />} />
+            <Route path="products/create"      element={<SellerProductCreate />} />
+            <Route path="products/edit/:id"    element={<SellerProductEdit />} />
+            <Route path="orders"               element={<SellerOrders />} />
+            <Route path="analytics"            element={<SellerAnalytics />} />
+            <Route path="payouts"              element={<SellerPayouts />} />
+            <Route path="settings"             element={<SellerSettings />} />
+          </Route>
 
 
           {/* Admin dashboard */}

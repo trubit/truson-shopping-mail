@@ -1,17 +1,53 @@
+import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { FiCheckCircle, FiPackage, FiArrowRight, FiShoppingBag } from 'react-icons/fi'
+import { FiCheckCircle, FiPackage, FiArrowRight, FiShoppingBag, FiTruck, FiAlertCircle } from 'react-icons/fi'
+import { useQueryClient } from '@tanstack/react-query'
 import { useOrder } from '../../../hooks/usePayment.js'
+import { paymentService } from '../../../services/paymentService.js'
+import { ORDER_KEY } from '../../../hooks/useOrders.js'
 import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
 
 export default function PaymentSuccess() {
-  const [params] = useSearchParams()
-  const orderId  = params.get('orderId') ?? ''
-  const { data: order, isLoading } = useOrder(orderId)
+  const [params]  = useSearchParams()
+  const orderId   = params.get('orderId') ?? ''
+  const intentId  = params.get('payment_intent') ?? ''
+  const qc        = useQueryClient()
+
+  const [confirming, setConfirming] = useState(true)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+
+  const { data: order, isLoading: orderLoading, refetch } = useOrder(orderId)
+
+  // Call /payment/confirm immediately — verifies with Stripe and updates the order
+  useEffect(() => {
+    if (!intentId) { setConfirming(false); return }
+
+    paymentService.confirmPayment(intentId)
+      .then(() => {
+        // Force-refetch the order so the UI shows paid/confirmed status
+        qc.invalidateQueries({ queryKey: ORDER_KEY })
+        return refetch()
+      })
+      .catch((err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })
+          ?.response?.data?.message ?? 'Could not confirm payment status.'
+        setConfirmError(msg)
+      })
+      .finally(() => setConfirming(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intentId])
+
+  const isLoading = confirming || orderLoading
+
+  const paymentPaid    = order?.paymentStatus === 'paid'
+  const orderConfirmed = order?.orderStatus === 'confirmed' || order?.orderStatus === 'processing'
+    || order?.orderStatus === 'shipped' || order?.orderStatus === 'delivered'
 
   return (
     <div className="payment-result payment-result--success">
       <div className="container payment-result__inner">
         <div className="payment-result__card">
+
           {/* Icon */}
           <div className="payment-result__icon-wrap payment-result__icon-wrap--success">
             <FiCheckCircle size={56} />
@@ -22,10 +58,58 @@ export default function PaymentSuccess() {
             Your order has been confirmed. We'll send you a confirmation email shortly.
           </p>
 
-          {/* Order summary */}
-          {isLoading && <div className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-xl)' }} />}
+          {/* Confirm error (non-fatal — webhook will still update the order) */}
+          {confirmError && (
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 8,
+              background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.3)',
+              borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1.25rem',
+              fontSize: '0.84rem', color: '#92400e',
+            }}>
+              <FiAlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>{confirmError} Your order will be updated automatically — check back shortly.</span>
+            </div>
+          )}
 
-          {order && (
+          {/* Status chips */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {isLoading ? (
+              <>
+                <div className="skeleton" style={{ width: 110, height: 32, borderRadius: 999 }} />
+                <div className="skeleton" style={{ width: 130, height: 32, borderRadius: 999 }} />
+              </>
+            ) : (
+              <>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '0.3rem 0.9rem', borderRadius: 999, fontSize: '0.8rem', fontWeight: 700,
+                  background: paymentPaid ? 'rgba(34,197,94,0.12)' : 'rgba(217,119,6,0.12)',
+                  border: `1px solid ${paymentPaid ? 'rgba(34,197,94,0.35)' : 'rgba(217,119,6,0.35)'}`,
+                  color: paymentPaid ? '#16a34a' : '#92400e',
+                }}>
+                  <FiCheckCircle size={13} />
+                  {paymentPaid ? 'Payment Paid' : 'Payment Pending'}
+                </span>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '0.3rem 0.9rem', borderRadius: 999, fontSize: '0.8rem', fontWeight: 700,
+                  background: orderConfirmed ? 'rgba(0,168,196,0.12)' : 'rgba(217,119,6,0.12)',
+                  border: `1px solid ${orderConfirmed ? 'rgba(0,168,196,0.35)' : 'rgba(217,119,6,0.35)'}`,
+                  color: orderConfirmed ? '#0e7490' : '#92400e',
+                }}>
+                  <FiTruck size={13} />
+                  {orderConfirmed ? 'Order Confirmed' : 'Order Processing'}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Order summary card */}
+          {isLoading && (
+            <div className="skeleton" style={{ height: 140, borderRadius: 'var(--radius-xl)', marginBottom: '1.5rem' }} />
+          )}
+
+          {!isLoading && order && (
             <div className="payment-result__order-card">
               <div className="payment-result__order-row">
                 <span>Order Number</span>
@@ -36,21 +120,27 @@ export default function PaymentSuccess() {
                 <span>{formatDate(order.createdAt)}</span>
               </div>
               <div className="payment-result__order-row">
+                <span>Items</span>
+                <span>{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="payment-result__order-row">
                 <span>Total Paid</span>
-                <strong>{formatCurrency(order.grandTotal)}</strong>
+                <strong style={{ color: '#16a34a' }}>{formatCurrency(order.grandTotal)}</strong>
               </div>
               <div className="payment-result__order-row">
                 <span>Shipping To</span>
-                <span>{order.shippingAddress.city}, {order.shippingAddress.country}</span>
+                <span>
+                  {order.shippingAddress.city}, {order.shippingAddress.state && `${order.shippingAddress.state}, `}{order.shippingAddress.country}
+                </span>
               </div>
             </div>
           )}
 
           {/* Actions */}
           <div className="payment-result__actions">
-            <Link to="/orders" className="btn btn-primary btn-lg">
+            <Link to={`/orders/${orderId}`} className="btn btn-primary btn-lg">
               <FiPackage size={16} />
-              Track My Order
+              View My Order
             </Link>
             <Link to="/products" className="btn btn-outline">
               <FiShoppingBag size={16} />
@@ -58,7 +148,6 @@ export default function PaymentSuccess() {
             </Link>
           </div>
 
-          {/* Delivery estimate */}
           <p className="payment-result__note">
             <FiArrowRight size={12} />
             Your order will be dispatched within 1–2 business days.

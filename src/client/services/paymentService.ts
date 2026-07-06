@@ -8,6 +8,10 @@ export const paymentService = {
     return api.get(`/payment/status/${paymentIntentId}`).then(unwrap<IPaymentStatusResponse>)
   },
 
+  confirmPayment(paymentIntentId: string): Promise<void> {
+    return api.post('/payment/confirm', { paymentIntentId }).then(() => undefined)
+  },
+
   refundPayment(input: IRefundRequest): Promise<IRefundResponse> {
     return api.post('/payment/refund', input).then(unwrap<IRefundResponse>)
   },

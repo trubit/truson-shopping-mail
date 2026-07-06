@@ -26,6 +26,18 @@ export const handleWebhook = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err) }
 }
 
+export const confirmPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { paymentIntentId } = req.body as { paymentIntentId: string }
+    if (!paymentIntentId) {
+      next(new AppError('paymentIntentId is required', 400))
+      return
+    }
+    const order = await paymentService.confirmPayment(paymentIntentId, req.user!.userId)
+    sendSuccess(res, order, 'Payment confirmed')
+  } catch (err) { next(err) }
+}
+
 export const refundPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await paymentService.refundPayment(req.body as RefundInput, req.user!.userId)

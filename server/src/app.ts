@@ -17,6 +17,7 @@ import orderRoutes        from './routes/order.routes.js'
 import paymentRoutes      from './routes/payment.routes.js'
 import dashboardRoutes    from './routes/dashboard.routes.js'
 import adminRoutes        from './routes/admin.routes.js'
+import sellerRoutes       from './routes/seller.routes.js'
 import * as paymentController from './modules/payment/payment.controller.js'
 
 const app = express()
@@ -63,6 +64,7 @@ app.use(`${API_PREFIX}/checkout`,      checkoutRoutes)
 app.use(`${API_PREFIX}/orders`,        orderRoutes)
 app.use(`${API_PREFIX}/payment`,       paymentRoutes)
 app.use(`${API_PREFIX}/dashboard`,     dashboardRoutes)
+app.use(`${API_PREFIX}/seller`,        sellerRoutes)
 app.use(`${API_PREFIX}/admin`,         adminRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────

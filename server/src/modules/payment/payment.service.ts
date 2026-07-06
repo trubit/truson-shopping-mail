@@ -194,6 +194,82 @@ const onChargeRefunded = async (charge: Stripe.Charge) => {
   logger.info('Charge refunded', { intentId })
 }
 
+/**
+ * Called by the frontend immediately after stripe.confirmPayment() succeeds.
+ * Re-verifies the PaymentIntent with Stripe (never trust the client alone), then
+ * updates the order to paid/confirmed. Idempotent — safe to run if the webhook
+ * already fired first.
+ */
+export const confirmPayment = async (paymentIntentId: string, userId: string) => {
+  const intent = await getStripe().paymentIntents.retrieve(paymentIntentId)
+
+  if (intent.status !== 'succeeded') {
+    throw new AppError(`Payment not yet succeeded — status: ${intent.status}`, 400)
+  }
+
+  const order = await Order.findOne({ paymentIntentId, userId })
+  if (!order) throw new AppError('Order not found for this payment', 404)
+
+  // Idempotent: webhook may have already updated the order
+  if (order.paymentStatus === 'paid') {
+    return order
+  }
+
+  const transactionId = typeof intent.latest_charge === 'string' ? intent.latest_charge : undefined
+
+  await Payment.findOneAndUpdate(
+    { paymentIntentId },
+    { status: 'completed', transactionId, stripeEventData: intent },
+  )
+
+  const updated = await Order.findOneAndUpdate(
+    { paymentIntentId, userId },
+    {
+      $set: { paymentStatus: 'paid', orderStatus: 'confirmed' },
+      $push: {
+        'tracking.events': {
+          status:      'confirmed',
+          description: 'Payment confirmed — order is being processed',
+          timestamp:   new Date(),
+        },
+      },
+    },
+    { returnDocument: 'after' },
+  )
+
+  if (updated) {
+    const uid  = updated.userId.toString()
+    const notif = await createNotification({
+      userId:  uid,
+      type:    'order',
+      title:   'Order confirmed',
+      message: `Your payment for order #${updated.orderNumber} was successful. We are now processing your order.`,
+      link:    `/orders/${updated._id}`,
+    }).catch(() => null)
+    if (notif) emitToUser(uid, 'notification:new', notif)
+    emitToUser(uid, 'order:updated', {
+      orderId:       updated._id,
+      orderStatus:   'confirmed',
+      paymentStatus: 'paid',
+    })
+  }
+
+  if (updated && updated.items.length > 0) {
+    const bulkOps = updated.items.map((item) => ({
+      updateOne: {
+        filter: { _id: item.productId, stockQuantity: { $gte: item.quantity } },
+        update: { $inc: { stockQuantity: -item.quantity } },
+      },
+    }))
+    await Product.bulkWrite(bulkOps, { ordered: false }).catch((err) =>
+      logger.warn('Stock reduction partially failed on confirm', { orderId: updated._id, err }),
+    )
+  }
+
+  logger.info('Payment confirmed via client endpoint', { paymentIntentId, orderId: updated?._id })
+  return updated
+}
+
 export const refundPayment = async (input: RefundInput, userId: string) => {
   const order = await Order.findOne({ _id: input.orderId, userId })
   if (!order) throw new AppError('Order not found', 404)

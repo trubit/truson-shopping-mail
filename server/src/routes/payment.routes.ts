@@ -23,6 +23,7 @@ router.use(authenticate)
 router.use(paymentLimiter)
 
 router.get('/status/:paymentIntentId', paymentController.getPaymentStatus)
+router.post('/confirm',               paymentController.confirmPayment)
 router.post('/refund', validate(refundSchema), paymentController.refundPayment)
 
 export default router

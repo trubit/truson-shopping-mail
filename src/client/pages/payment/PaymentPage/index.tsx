@@ -75,7 +75,14 @@ export default function PaymentPage() {
               </div>
             )}
 
-            {(step === 'form' || step === 'failed') && (
+            {/*
+              Keep <Elements> mounted through form, failed, AND processing steps.
+              Unmounting it while confirmPayment is in-flight destroys the
+              PaymentElement iframe, making `elements` unusable and causing
+              Stripe's IntegrationError. Hide visually during processing without
+              tearing down the React subtree.
+            */}
+            <div style={{ display: step === 'processing' ? 'none' : undefined }}>
               <Elements stripe={stripePromise} options={stripeOptions}>
                 <PaymentForm
                   orderId={orderId}
@@ -83,7 +90,7 @@ export default function PaymentPage() {
                   currency={currency}
                 />
               </Elements>
-            )}
+            </div>
           </main>
 
           <OrderSummaryPanel

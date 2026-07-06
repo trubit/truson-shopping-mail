@@ -25,7 +25,8 @@ export default function PaymentForm({ orderId, amount, currency }: PaymentFormPr
 
     setLoading(true)
     setError(null)
-    setStep('processing')
+    // Do NOT call setStep('processing') here — it unmounts <Elements> which
+    // invalidates the `elements` reference before confirmPayment can use it.
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -49,7 +50,8 @@ export default function PaymentForm({ orderId, amount, currency }: PaymentFormPr
     }
 
     if (paymentIntent?.status === 'processing') {
-      // Bank transfers, etc. — show processing state
+      // Async payment method (e.g. bank transfer) — confirmPayment has
+      // already returned, so it is safe to unmount Elements now.
       setStep('processing')
       setLoading(false)
       return
