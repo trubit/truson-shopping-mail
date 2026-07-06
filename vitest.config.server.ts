@@ -7,6 +7,8 @@ export default defineConfig({
     environment: 'node',
     env: {
       NODE_ENV: 'test',
+      STRIPE_SECRET_KEY: 'sk_test_placeholder_for_tests',
+      STRIPE_PUBLISHABLE_KEY: 'pk_test_placeholder_for_tests',
     },
     globalSetup: ['./tests/setup/server.global.ts'],
     setupFiles: ['./tests/setup/server.setup.ts'],
