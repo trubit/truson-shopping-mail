@@ -81,5 +81,7 @@ productSchema.index({ createdAt: -1 })
 productSchema.index({ isActive: 1, status: 1 })
 productSchema.index({ isFeatured: 1, status: 1 })
 productSchema.index({ sellerId: 1, status: 1 })
+productSchema.index({ views: -1 })            // supports sort=popular without full collection scan
+productSchema.index({ brand: 1 })             // supports brand equality filter after lowercasing
 
 export const Product = mongoose.model<IProductDocument>('Product', productSchema)

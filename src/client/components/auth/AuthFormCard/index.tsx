@@ -28,7 +28,7 @@ export default function AuthFormCard({ title, subtitle, wide, children }: AuthFo
       </main>
 
       <footer style={{ textAlign: 'center', padding: 'var(--space-6)', fontSize: 'var(--text-xs)', color: 'var(--color-neutral-400)' }}>
-        &copy; {new Date().getFullYear()} TrusonShopp Mall &nbsp;|&nbsp;
+        &copy; {new Date().getFullYear()} Cartiva &nbsp;|&nbsp;
         <a href="#" className="auth-link">Privacy</a> &nbsp;|&nbsp;
         <a href="#" className="auth-link">Terms</a> &nbsp;|&nbsp;
         <a href="#" className="auth-link">Help</a>

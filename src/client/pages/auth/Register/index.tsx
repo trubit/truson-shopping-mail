@@ -155,7 +155,7 @@ export default function RegisterPage() {
         <SocialLogin />
 
         <p className="auth-terms">
-          By creating an account, you agree to TrusonShopp Mall&apos;s{' '}
+          By creating an account, you agree to Cartiva&apos;s{' '}
           <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
         </p>
 

@@ -23,7 +23,7 @@ export const useThemeStore = create<ThemeStore>()(
         }),
     }),
     {
-      name: 'trusonshopp-theme',
+      name: 'cartiva-theme',
       onRehydrateStorage: () => (state) => {
         applyTheme(state?.theme ?? 'dark')
       },

@@ -5,7 +5,7 @@ import {
   getSellerProducts, getFeaturedProducts,
 } from './product.service.js'
 import { sendSuccess, sendCreated, sendNoContent } from '../../utils/response.js'
-import { uploadImageBuffer, isCloudinaryConfigured } from '../../config/cloudinary.js'
+import { uploadImagePath, isCloudinaryConfigured } from '../../config/cloudinary.js'
 import { AppError } from '../../middlewares/error.middleware.js'
 import type { ProductFiltersInput } from '../../../../src/shared/validators/product.validators.js'
 import { ROLES } from '../../../../src/shared/constants/index.js'
@@ -95,7 +95,7 @@ export const uploadImages = async (req: Request, res: Response, next: NextFuncti
       return next(new AppError('No images provided', 400))
     }
     const uploads = await Promise.all(
-      files.map(f => uploadImageBuffer(f.buffer, 'trusonshopp/products', {
+      files.map(f => uploadImagePath(f.path, 'cartiva/products', {
         transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
       })),
     )

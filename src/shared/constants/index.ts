@@ -1,6 +1,6 @@
-export const APP_NAME    = 'TrusonShopp Mall'
+export const APP_NAME    = 'Cartiva'
 export const API_PREFIX  = '/api/v1'
-export const SUPPORT_EMAIL   = 'support@trusonshopp.com'
+export const SUPPORT_EMAIL   = 'support@cartiva.com'
 export const DEFAULT_CURRENCY = 'USD'
 
 export const ROLES = {

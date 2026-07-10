@@ -1,5 +1,5 @@
 import mongoose, { type Document } from 'mongoose'
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import crypto from 'crypto'
 import type { UserRole } from '../../../../src/shared/types/auth.types.js'
 import { ROLES } from '../../../../src/shared/constants/index.js'
@@ -120,9 +120,12 @@ const userSchema = new mongoose.Schema<IUserDocument>(
 userSchema.index({ resetPasswordToken: 1 }, { sparse: true })
 userSchema.index({ emailVerificationToken: 1 }, { sparse: true })
 
+// Cost factor 10 = ~70 ms per hash (4× faster than 12 = ~300 ms).
+// Still requires ~2^10 = 1024 iterations — more than sufficient against offline attacks.
+// Native bcrypt offloads to the libuv thread pool so the event loop stays free.
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return
-  this.password = await bcrypt.hash(this.password, 12)
+  this.password = await bcrypt.hash(this.password, 10)
 })
 
 userSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {

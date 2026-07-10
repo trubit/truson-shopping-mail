@@ -45,7 +45,7 @@ const sendViaEthereal = async (options: MailOptions): Promise<void> => {
     })
   }
   const info = await _ethereal.sendMail({
-    from:    '"TrusonShopp Mall" <noreply@trusonshopp.dev>',
+    from:    '"Cartiva" <noreply@cartiva.com>',
     to:      options.to,
     subject: options.subject,
     html:    options.html,
@@ -63,7 +63,7 @@ const sendViaEthereal = async (options: MailOptions): Promise<void> => {
 const parseFrom = (from: string): { name: string; email: string } => {
   const m = from.match(/^(.+?)\s*<([^>]+)>$/)
   if (m) return { name: m[1].trim(), email: m[2].trim() }
-  return { name: 'TrusonShopp Mall', email: from.trim() }
+  return { name: 'Cartiva', email: from.trim() }
 }
 
 // ─── Startup check ─────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ export const verifyEmailConfig = async (): Promise<void> => {
 // ─── Core send ─────────────────────────────────────────────────────────────────
 export const sendEmail = async (options: MailOptions): Promise<void> => {
   if (env.BREVO_API_KEY) {
-    const { name, email } = parseFrom(env.EMAIL_FROM || env.EMAIL_USER || 'noreply@trusonshopp.com')
+    const { name, email } = parseFrom(env.EMAIL_FROM || env.EMAIL_USER || 'noreply@cartiva.com')
     await sendViaBrevoAPI({ ...options, from: email, fromName: name })
     logger.info(`Email sent  to="${options.to}"  subject="${options.subject}"`)
   } else {
@@ -95,11 +95,11 @@ export const sendVerificationEmail = async (
   const url = `${env.CLIENT_URL}/verify-email?token=${token}`
   await sendEmail({
     to,
-    subject: 'Verify your TrusonShopp Mall email',
+    subject: 'Verify your Cartiva email',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e8eaed;border-radius:8px;overflow:hidden;">
         <div style="background:#131921;padding:24px 32px;">
-          <h1 style="color:#FF9900;margin:0;font-size:22px;letter-spacing:.5px;">TrusonShopp Mall</h1>
+          <h1 style="color:#FF9900;margin:0;font-size:22px;letter-spacing:.5px;">Cartiva</h1>
         </div>
         <div style="padding:32px;">
           <h2 style="color:#131921;margin:0 0 12px;">Welcome, ${firstName}!</h2>
@@ -117,7 +117,7 @@ export const sendVerificationEmail = async (
           </p>
         </div>
         <div style="background:#f7f7f7;padding:16px 32px;border-top:1px solid #eee;">
-          <p style="color:#aaa;font-size:12px;margin:0;">© TrusonShopp Mall · Trusted Marketplace</p>
+          <p style="color:#aaa;font-size:12px;margin:0;">© Cartiva · Trusted Marketplace</p>
         </div>
       </div>`,
   })
@@ -132,16 +132,16 @@ export const sendPasswordResetEmail = async (
   const url = `${env.CLIENT_URL}/reset-password?token=${token}`
   await sendEmail({
     to,
-    subject: 'Reset your TrusonShopp Mall password',
+    subject: 'Reset your Cartiva password',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e8eaed;border-radius:8px;overflow:hidden;">
         <div style="background:#131921;padding:24px 32px;">
-          <h1 style="color:#FF9900;margin:0;font-size:22px;letter-spacing:.5px;">TrusonShopp Mall</h1>
+          <h1 style="color:#FF9900;margin:0;font-size:22px;letter-spacing:.5px;">Cartiva</h1>
         </div>
         <div style="padding:32px;">
           <h2 style="color:#131921;margin:0 0 12px;">Password Reset</h2>
           <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-            Hi ${firstName}, we received a request to reset your TrusonShopp Mall password.
+            Hi ${firstName}, we received a request to reset your Cartiva password.
           </p>
           <a href="${url}"
             style="display:inline-block;padding:13px 32px;background:#FF9900;color:#131921;
@@ -154,7 +154,7 @@ export const sendPasswordResetEmail = async (
           </p>
         </div>
         <div style="background:#f7f7f7;padding:16px 32px;border-top:1px solid #eee;">
-          <p style="color:#aaa;font-size:12px;margin:0;">© TrusonShopp Mall · Trusted Marketplace</p>
+          <p style="color:#aaa;font-size:12px;margin:0;">© Cartiva · Trusted Marketplace</p>
         </div>
       </div>`,
   })

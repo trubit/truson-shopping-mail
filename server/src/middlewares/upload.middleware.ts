@@ -1,3 +1,5 @@
+import os from 'os'
+import path from 'path'
 import multer from 'multer'
 import type { Request, Response, NextFunction } from 'express'
 import { AppError } from './error.middleware.js'
@@ -5,7 +7,16 @@ import { AppError } from './error.middleware.js'
 const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 
-const storage = multer.memoryStorage()
+// Write uploads to OS temp dir instead of RAM.
+// This prevents 40 MB × concurrent_uploads from filling the Node.js heap.
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, os.tmpdir()),
+  filename:    (_req, file, cb) => {
+    const ext  = path.extname(file.originalname).toLowerCase()
+    const name = `cartiva-upload-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+    cb(null, name)
+  },
+})
 
 const uploader = multer({
   storage,
@@ -19,7 +30,12 @@ const uploader = multer({
   },
 })
 
-const wrapMulter = (handler: ReturnType<typeof uploader.single | typeof uploader.array>, req: Request, res: Response, next: NextFunction): void => {
+const wrapMulter = (
+  handler: ReturnType<typeof uploader.single | typeof uploader.array>,
+  req:     Request,
+  res:     Response,
+  next:    NextFunction,
+): void => {
   handler(req, res, (err) => {
     if (!err) return next()
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {

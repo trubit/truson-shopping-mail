@@ -60,7 +60,7 @@ export const useDashboardStore = create<DashboardStore>()(
       setRecentProducts: (products) => set({ recentProducts: products }),
     }),
     {
-      name: 'trusonshopp-dashboard',
+      name: 'cartiva-dashboard',
       partialize: (state) => ({
         wishlistItems: state.wishlistItems,
         wishlistCount: state.wishlistCount,

@@ -161,17 +161,31 @@ export const syncCart = async (userId: string, input: SyncCartInput): Promise<IC
   let cart = await Cart.findOne({ userId: uid(userId) })
   if (!cart) cart = new Cart({ userId: uid(userId), items: [] })
 
-  for (const guestItem of input.items) {
-    if (!mongoose.isValidObjectId(guestItem.productId)) continue
+  // Validate all IDs up-front and batch-fetch all products in one query
+  // instead of one Product.findOne() per item (N+1 → 1).
+  const validItems = input.items.filter((i) => mongoose.isValidObjectId(i.productId))
+  if (validItems.length === 0) {
+    await cart.save()
+    return cart
+  }
 
-    const product = await Product.findOne({ _id: guestItem.productId, status: 'active', isActive: true })
+  const productIds  = validItems.map((i) => i.productId)
+  const productDocs = await Product.find({
+    _id:      { $in: productIds },
+    status:   'active',
+    isActive: true,
+  })
+  const productMap  = new Map(productDocs.map((p) => [p._id.toString(), p]))
+
+  for (const guestItem of validItems) {
+    const product = productMap.get(guestItem.productId)
     if (!product || product.stockQuantity === 0) continue
 
     const effectivePrice = (product.discountPrice && product.discountPrice < product.price)
       ? product.discountPrice
       : product.price
 
-    const safeQty = Math.min(guestItem.quantity, product.stockQuantity)
+    const safeQty     = Math.min(guestItem.quantity, product.stockQuantity)
     const existingIdx = cart.items.findIndex((i) => i.productId.toString() === guestItem.productId)
 
     if (existingIdx >= 0) {

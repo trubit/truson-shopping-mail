@@ -14,14 +14,9 @@ const devFormat = combine(
 
 export const logger = winston.createLogger({
   level: env.isDev() ? 'debug' : 'info',
+  // In production use JSON to stdout — the container runtime (Docker/K8s)
+  // captures stdout and ships it to your log aggregator (CloudWatch, Loki, etc.).
+  // File transports are avoided because container filesystems are ephemeral.
   format: env.isDev() ? devFormat : combine(timestamp(), json()),
-  transports: [
-    new winston.transports.Console(),
-    ...(env.isProd()
-      ? [
-          new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-          new winston.transports.File({ filename: 'logs/combined.log' }),
-        ]
-      : []),
-  ],
+  transports: [new winston.transports.Console()],
 })

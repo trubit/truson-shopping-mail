@@ -15,7 +15,7 @@ const FOOTER_COLS = [
     title: 'Make Money with Us',
     links: [
       { label: 'Sell Products Online', to: '/register' },
-      { label: 'Sell on TrusonShopp', to: '/register' },
+      { label: 'Sell on Cartiva', to: '/register' },
       { label: 'Become an Affiliate', to: '/affiliate' },
       { label: 'Advertise Your Products', to: '/advertise' },
     ],
@@ -92,7 +92,7 @@ export default function Footer() {
             </div>
           </div>
           <p className="amz-footer__copy">
-            &copy; 1996–{year}, TrusonShopp Mall, Inc. or its affiliates
+            &copy; 1996–{year}, Cartiva, Inc. or its affiliates
           </p>
         </div>
       </div>

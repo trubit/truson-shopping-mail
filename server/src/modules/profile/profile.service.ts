@@ -1,6 +1,6 @@
 import { User } from '../user/user.model.js'
 import { AppError } from '../../middlewares/error.middleware.js'
-import { uploadImageBuffer, deleteImage, isCloudinaryConfigured } from '../../config/cloudinary.js'
+import { uploadImagePath, deleteImage, isCloudinaryConfigured } from '../../config/cloudinary.js'
 import type { IAddressDoc, INotificationSettingsDoc } from '../user/user.model.js'
 
 export interface UpdateProfileData {
@@ -60,7 +60,7 @@ export const uploadAvatar = async (userId: string, file: Express.Multer.File) =>
   if (!userWithPublicId) throw new AppError('User not found', 404)
 
   // Upload fresh image (always new public_id), then delete old one
-  const { url, publicId } = await uploadImageBuffer(file.buffer, 'trusonshopp/avatars')
+  const { url, publicId } = await uploadImagePath(file.path, 'cartiva/avatars')
 
   if (userWithPublicId.profileImagePublicId) {
     await deleteImage(userWithPublicId.profileImagePublicId).catch(() => null)

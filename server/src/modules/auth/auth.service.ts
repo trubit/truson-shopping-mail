@@ -40,15 +40,16 @@ export const registerUser = async (data: RegisterCredentials): Promise<IUserDocu
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 export const loginUser = async (email: string, password: string) => {
+  // Select only the fields needed for login — avoids loading 4 KB of profile data
+  // (address, preferences, notificationSettings, etc.) for every login request.
   const user = await User.findOne({ email: email.toLowerCase() })
-    .select('+password +refreshTokens')
+    .select('+password +refreshTokens role isActive emailVerified firstName lastName')
 
   if (!user || !(await user.comparePassword(password))) {
     throw new AppError('Invalid email or password', 401)
   }
 
-  if (!user.isActive) throw new AppError('Your account has been deactivated', 403)
-
+  if (!user.isActive)      throw new AppError('Your account has been deactivated', 403)
   if (!user.emailVerified) {
     throw new AppError(
       'Your email address is not verified. Please check your inbox and click the verification link, or request a new one.',
@@ -59,20 +60,30 @@ export const loginUser = async (email: string, password: string) => {
   const tokens = generateTokenPair({ userId: user._id.toString(), email: user.email, role: user.role })
 
   const hashedRefresh = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex')
-  user.refreshTokens = [...(user.refreshTokens ?? []).slice(-4), hashedRefresh]
-  await user.save({ validateBeforeSave: false })
+
+  // Atomic update: append the new token hash, keep only the last 5.
+  // Uses findByIdAndUpdate so Mongoose does NOT run the bcrypt pre-save hook
+  // and does NOT re-validate the full document — far cheaper than user.save().
+  await User.findByIdAndUpdate(
+    user._id,
+    {
+      $push: {
+        refreshTokens: {
+          $each:  [hashedRefresh],
+          $slice: -5,  // keep the 5 most recent refresh tokens per account
+        },
+      },
+    },
+  )
 
   return { user, tokens }
 }
 
 // ─── Logout ──────────────────────────────────────────────────────────────────
 export const logoutUser = async (userId: string, refreshToken: string): Promise<void> => {
-  const user = await User.findById(userId).select('+refreshTokens')
-  if (!user) return
-
   const hashed = crypto.createHash('sha256').update(refreshToken).digest('hex')
-  user.refreshTokens = (user.refreshTokens ?? []).filter((t) => t !== hashed)
-  await user.save({ validateBeforeSave: false })
+  // Atomic pull — no need to load the document first
+  await User.findByIdAndUpdate(userId, { $pull: { refreshTokens: hashed } })
 }
 
 // ─── Refresh Tokens ────────────────────────────────────────────────────────────
@@ -85,17 +96,23 @@ export const refreshTokens = async (refreshToken: string) => {
   }
 
   const hashed = crypto.createHash('sha256').update(refreshToken).digest('hex')
-  const user = await User.findById(payload.userId).select('+refreshTokens')
+  const user   = await User.findById(payload.userId)
+    .select('+refreshTokens role email firstName lastName')
 
   if (!user || !(user.refreshTokens ?? []).includes(hashed)) {
     throw new AppError('Refresh token not recognized', 401)
   }
 
-  const tokens = generateTokenPair({ userId: user._id.toString(), email: user.email, role: user.role })
-
+  const tokens    = generateTokenPair({ userId: user._id.toString(), email: user.email, role: user.role })
   const newHashed = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex')
-  user.refreshTokens = (user.refreshTokens ?? []).filter((t) => t !== hashed).concat(newHashed)
-  await user.save({ validateBeforeSave: false })
+
+  // Atomic swap: remove old token, add new one in a single DB round trip
+  await User.findByIdAndUpdate(user._id, {
+    $pull: { refreshTokens: hashed },
+  })
+  await User.findByIdAndUpdate(user._id, {
+    $push: { refreshTokens: { $each: [newHashed], $slice: -5 } },
+  })
 
   return { user, tokens }
 }
@@ -109,7 +126,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
   await user.save({ validateBeforeSave: false })
 
   await sendPasswordResetEmail(user.email, user.firstName, resetToken).catch(async () => {
-    user.resetPasswordToken = undefined
+    user.resetPasswordToken   = undefined
     user.resetPasswordExpires = undefined
     await user.save({ validateBeforeSave: false })
   })
@@ -120,16 +137,16 @@ export const resetPassword = async (token: string, newPassword: string): Promise
   const hashed = crypto.createHash('sha256').update(token).digest('hex')
 
   const user = await User.findOne({
-    resetPasswordToken: hashed,
+    resetPasswordToken:   hashed,
     resetPasswordExpires: { $gt: new Date() },
   }).select('+resetPasswordToken +resetPasswordExpires +refreshTokens')
 
   if (!user) throw new AppError('Reset token is invalid or has expired', 400)
 
-  user.password = newPassword
-  user.resetPasswordToken = undefined
+  user.password             = newPassword
+  user.resetPasswordToken   = undefined
   user.resetPasswordExpires = undefined
-  user.refreshTokens = []
+  user.refreshTokens        = []
   await user.save()
 }
 
@@ -138,22 +155,22 @@ export const verifyEmail = async (token: string): Promise<void> => {
   const hashed = crypto.createHash('sha256').update(token).digest('hex')
 
   const user = await User.findOne({
-    emailVerificationToken: hashed,
+    emailVerificationToken:   hashed,
     emailVerificationExpires: { $gt: new Date() },
   }).select('+emailVerificationToken +emailVerificationExpires')
 
   if (!user) throw new AppError('Verification link is invalid or has expired', 400)
 
-  user.emailVerified = true
-  user.emailVerificationToken = undefined
-  user.emailVerificationExpires = undefined
+  user.emailVerified             = true
+  user.emailVerificationToken    = undefined
+  user.emailVerificationExpires  = undefined
   await user.save({ validateBeforeSave: false })
 }
 
 // ─── Resend Verification Email ────────────────────────────────────────────────
 export const resendVerificationEmail = async (email: string): Promise<void> => {
   const user = await User.findOne({ email: email.toLowerCase() })
-  if (!user || user.emailVerified) return // Silent — don't reveal account state
+  if (!user || user.emailVerified) return
 
   const token = user.createEmailVerificationToken()
   await user.save({ validateBeforeSave: false })

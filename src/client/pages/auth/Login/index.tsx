@@ -36,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthFormCard title="Sign In" subtitle="Welcome back to TrusonShopp Mall">
+    <AuthFormCard title="Sign In" subtitle="Welcome back to Cartiva">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
         {registered && (
           <div className="auth-alert auth-alert-success">
@@ -119,11 +119,11 @@ export default function LoginPage() {
         <SocialLogin />
 
         <p className="auth-terms">
-          By signing in, you agree to TrusonShopp Mall&apos;s{' '}
+          By signing in, you agree to Cartiva&apos;s{' '}
           <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
         </p>
 
-        <div className="auth-divider">New to TrusonShopp Mall?</div>
+        <div className="auth-divider">New to Cartiva?</div>
 
         <Link to="/register">
           <button type="button" className="auth-btn auth-btn-secondary">

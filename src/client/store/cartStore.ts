@@ -130,7 +130,7 @@ export const useCartStore = create<CartStore>()(
       guestTotals: () => calcGuestTotals(get().guestItems),
     }),
     {
-      name: 'trusonshopp-cart',
+      name: 'cartiva-cart',
       partialize: (state) => ({
         guestItems: state.guestItems,
         serverCart: state.serverCart,

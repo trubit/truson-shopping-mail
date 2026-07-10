@@ -42,6 +42,6 @@ export const useLanguageStore = create<LanguageState>()(
       },
       getLang: () => LANGUAGES.find((l) => l.code === get().currentLang) ?? LANGUAGES[0],
     }),
-    { name: 'trusonshopp-lang' },
+    { name: 'cartiva-lang' },
   ),
 )

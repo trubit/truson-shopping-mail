@@ -37,6 +37,8 @@ const notificationSchema = new mongoose.Schema<INotificationDocument>(
 
 notificationSchema.index({ userId: 1, createdAt: -1 })
 notificationSchema.index({ userId: 1, read: 1 })
+// Auto-delete notifications after 90 days — prevents unlimited collection growth
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
 export const Notification = mongoose.model<INotificationDocument>('Notification', notificationSchema)
 

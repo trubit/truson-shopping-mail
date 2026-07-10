@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'trusonshopp-auth',
+      name: 'cartiva-auth',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
     },
   ),

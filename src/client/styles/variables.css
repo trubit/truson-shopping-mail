@@ -1,9 +1,10 @@
-/* ──��� Logo color tokens (used by Logo component theme="auto") ��─ */
+﻿/* --- Logo color tokens (used by Logo component theme="auto") --- */
 :root {
-  --ts-logo-mark: #0B2D3D;
-  --ts-logo-thin: #091820;
-  --ts-logo-bold: #0B2D3D;
-  --ts-logo-tag:  #A07C45;
+  --cv-logo-arc:  #0B2150;
+  --cv-logo-dot:  #E8A020;
+  --cv-logo-cart: #0B2150;
+  --cv-logo-bold: #0B2150;
+  --cv-logo-sub:  #E8A020;
 }
 /* The site header/footer/auth header always have a dark background,
    so any logo placed there should use theme="dark" directly.
@@ -11,15 +12,15 @@
    can be either light or dark (e.g. product pages, modals). */
 @media (prefers-color-scheme: dark) {
   :root {
-    --ts-logo-mark: #C8A96A;
-    --ts-logo-thin: rgba(226,221,212,.78);
-    --ts-logo-bold: #ffffff;
-    --ts-logo-tag:  #DBBF89;
+    --cv-logo-arc:  #E8A020;
+    --cv-logo-dot:  #F5C86A;
+    --cv-logo-cart: rgba(255,255,255,0.70);
+    --cv-logo-bold: #ffffff;
+    --cv-logo-sub:  rgba(232,160,32,0.80);
   }
 }
-[data-theme="dark"]  { --ts-logo-mark: #C8A96A; --ts-logo-thin: rgba(226,221,212,.78); --ts-logo-bold: #ffffff; --ts-logo-tag: #DBBF89; }
-[data-theme="light"] { --ts-logo-mark: #0B2D3D; --ts-logo-thin: #091820; --ts-logo-bold: #0B2D3D; --ts-logo-tag: #A07C45; }
-
+[data-theme="dark"]  { --cv-logo-arc: #E8A020; --cv-logo-dot: #F5C86A; --cv-logo-cart: rgba(255,255,255,0.70); --cv-logo-bold: #ffffff; --cv-logo-sub: rgba(232,160,32,0.80); }
+[data-theme="light"] { --cv-logo-arc: #0B2150; --cv-logo-dot: #E8A020; --cv-logo-cart: #0B2150; --cv-logo-bold: #0B2150; --cv-logo-sub: #E8A020; }
 :root {
   /* ─── Amazon Brand Colors ──────────────────────── */
   --color-brand-primary:  #131921;   /* header bg */

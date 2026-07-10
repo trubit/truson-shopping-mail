@@ -178,7 +178,7 @@ export default function HomePage() {
       <section style={{ background: 'var(--color-navbar-bg)', padding: 'var(--space-10) 0' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h2 style={{ color: '#fff', fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>
-            Start Selling on TrusonShopp Mall
+            Start Selling on Cartiva
           </h2>
           <p style={{ color: 'rgba(255,255,255,.7)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-6)', maxWidth: 440, margin: '0 auto var(--space-6)' }}>
             Reach millions of buyers. List your products today and grow your business.
