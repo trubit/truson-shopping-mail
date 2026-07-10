@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { FiCheckCircle, FiPackage, FiArrowRight, FiShoppingBag, FiTruck, FiAlertCircle } from 'react-icons/fi'
-import { useQueryClient } from '@tanstack/react-query'
 import { useOrder } from '../../../hooks/usePayment.js'
 import { paymentService } from '../../../services/paymentService.js'
-import { ORDER_KEY } from '../../../hooks/useOrders.js'
 import { formatCurrency, formatDate } from '../../../../shared/helpers/index.js'
 
 export default function PaymentSuccess() {
   const [params]  = useSearchParams()
   const orderId   = params.get('orderId') ?? ''
   const intentId  = params.get('payment_intent') ?? ''
-  const qc        = useQueryClient()
 
   const [confirming, setConfirming] = useState(true)
   const [confirmError, setConfirmError] = useState<string | null>(null)
@@ -23,11 +20,7 @@ export default function PaymentSuccess() {
     if (!intentId) { setConfirming(false); return }
 
     paymentService.confirmPayment(intentId)
-      .then(() => {
-        // Force-refetch the order so the UI shows paid/confirmed status
-        qc.invalidateQueries({ queryKey: ORDER_KEY })
-        return refetch()
-      })
+      .then(() => refetch())   // single refetch — no redundant invalidateQueries on the same key
       .catch((err: unknown) => {
         const msg = (err as { response?: { data?: { message?: string } } })
           ?.response?.data?.message ?? 'Could not confirm payment status.'
@@ -38,6 +31,8 @@ export default function PaymentSuccess() {
   }, [intentId])
 
   const isLoading = confirming || orderLoading
+  // Prefer the orderId search param; fall back to the confirmed order's _id
+  const orderDetailId = orderId || (order?._id as string | undefined) || ''
 
   const paymentPaid    = order?.paymentStatus === 'paid'
   const orderConfirmed = order?.orderStatus === 'confirmed' || order?.orderStatus === 'processing'
@@ -138,7 +133,7 @@ export default function PaymentSuccess() {
 
           {/* Actions */}
           <div className="payment-result__actions">
-            <Link to={`/orders/${orderId}`} className="btn btn-primary btn-lg">
+            <Link to={`/orders/${orderDetailId}`} className="btn btn-primary btn-lg">
               <FiPackage size={16} />
               View My Order
             </Link>

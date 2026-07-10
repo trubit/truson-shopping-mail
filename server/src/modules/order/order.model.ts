@@ -67,6 +67,7 @@ export interface IOrderDocument extends Document {
   paymentStatus:      'pending' | 'paid' | 'failed' | 'refunded'
   orderStatus:        'pending' | 'confirmed' | 'processing' | 'shipped' | 'outForDelivery' | 'delivered' | 'cancelled' | 'returned' | 'refunded'
   paymentIntentId?:   string
+  paystackReference?: string
   notes?:             string
   tracking?:          IOrderTrackingDoc
   returnRequest?:     IReturnRequestDoc
@@ -155,6 +156,7 @@ const orderSchema = new mongoose.Schema<IOrderDocument>(
     paymentStatus:      { type: String, enum: Object.values(PAYMENT_STATUS), default: PAYMENT_STATUS.PENDING, index: true },
     orderStatus:        { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING, index: true },
     paymentIntentId:    { type: String },
+    paystackReference:  { type: String },
     notes:              { type: String, maxlength: 500 },
     tracking:           { type: trackingSchema },
     returnRequest:      { type: returnRequestSchema },
@@ -169,6 +171,7 @@ const orderSchema = new mongoose.Schema<IOrderDocument>(
 
 orderSchema.index({ userId: 1, createdAt: -1 })
 orderSchema.index({ paymentIntentId: 1 }, { sparse: true })
+orderSchema.index({ paystackReference: 1 }, { sparse: true })
 orderSchema.index({ 'items.productId': 1 })
 
 export const Order = mongoose.model<IOrderDocument>('Order', orderSchema)

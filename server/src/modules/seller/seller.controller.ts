@@ -69,8 +69,8 @@ export const getProducts = async (req: Request, res: Response, next: NextFunctio
   try {
     const { page, limit, search, category, sort } = req.query as Record<string, string>
     const result = await productService.getSellerProducts(req.user!.userId, {
-      page:     page     ? Number(page)  : 1,
-      limit:    limit    ? Number(limit) : 20,
+      page:     Math.max(1, parseInt(page  ?? '1',  10) || 1),
+      limit:    Math.min(100, Math.max(1, parseInt(limit ?? '20', 10) || 20)),
       search:   search   || undefined,
       category: category || undefined,
       sort:     (sort as Parameters<typeof productService.getSellerProducts>[1]['sort']) || undefined,
@@ -114,8 +114,8 @@ export const deleteProduct = async (
 export const getOrders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { status, page, limit } = req.query as Record<string, string>
-    const p    = page  ? Number(page)  : 1
-    const l    = limit ? Number(limit) : 20
+    const p    = Math.max(1, parseInt(page  ?? '1',  10) || 1)
+    const l    = Math.min(100, Math.max(1, parseInt(limit ?? '20', 10) || 20))
     const result = await orderService.getSellerOrders(req.user!.userId, {
       status: status || undefined,
       page:   p,

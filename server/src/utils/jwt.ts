@@ -9,10 +9,10 @@ export const signRefreshToken = (payload: Omit<TokenPayload, 'iat' | 'exp'>): st
   jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions)
 
 export const verifyAccessToken = (token: string): TokenPayload =>
-  jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload
+  jwt.verify(token, env.JWT_ACCESS_SECRET, { algorithms: ['HS256'] }) as TokenPayload
 
 export const verifyRefreshToken = (token: string): TokenPayload =>
-  jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload
+  jwt.verify(token, env.JWT_REFRESH_SECRET, { algorithms: ['HS256'] }) as TokenPayload
 
 export const generateTokenPair = (payload: Omit<TokenPayload, 'iat' | 'exp'>): AuthTokens => ({
   accessToken: signAccessToken(payload),

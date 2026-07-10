@@ -2,7 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import compression from 'compression'
 import cookieParser from 'cookie-parser'
+import mongoose from 'mongoose'
+import { redis } from './database/redis.js'
 import { env } from './config/env.js'
 import { globalLimiter } from './middlewares/rateLimiter.middleware.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
@@ -22,25 +25,35 @@ import * as paymentController from './modules/payment/payment.controller.js'
 
 const app = express()
 
-// ─── Stripe Webhook (raw body BEFORE express.json) ────────────────────────────
-// Stripe requires the raw request body for signature verification
+// ─── Webhooks (raw body BEFORE express.json) ──────────────────────────────────
 app.post(
   '/webhooks/stripe',
   express.raw({ type: 'application/json' }),
   paymentController.handleWebhook,
 )
 
+app.post(
+  '/webhooks/paystack',
+  express.raw({ type: 'application/json' }),
+  paymentController.paystackWebhook,
+)
+
 // ─── Security ─────────────────────────────────────────────────────────────────
 app.use(helmet())
 app.use(
   cors({
-    origin: env.CLIENT_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin:       env.CLIENT_URL,
+    credentials:  true,
+    methods:      ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 )
 app.use(globalLimiter)
+
+// ─── Compression ──────────────────────────────────────────────────────────────
+// Compresses JSON responses with gzip — typically 70-80% smaller on the wire.
+// Must come before routes but after raw-body webhook routes.
+app.use(compression())
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '2mb' }))
@@ -48,11 +61,34 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }))
 app.use(cookieParser())
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
-if (env.isDev()) app.use(morgan('dev'))
+// Use combined format in production (stdout captured by container runtime);
+// dev format in development for readable output.
+app.use(morgan(env.isDev() ? 'dev' : 'combined'))
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => {
-  res.json({ success: true, message: 'TrusonShopp Mall API is running', env: env.NODE_ENV })
+// Checks real DB + Redis state so load balancers route away from broken nodes.
+app.get('/health', async (_req, res) => {
+  const dbState  = mongoose.connection.readyState  // 1 = connected
+  const dbOk     = dbState === 1
+
+  let redisOk = false
+  try {
+    const pong = await redis.ping()
+    redisOk    = pong === 'PONG'
+  } catch {
+    redisOk = false
+  }
+
+  const status = dbOk ? 200 : 503
+  res.status(status).json({
+    success: dbOk,
+    message: dbOk ? 'Cartiva API is running' : 'Service degraded',
+    env:     env.NODE_ENV,
+    checks: {
+      mongodb: dbOk    ? 'ok' : 'unavailable',
+      redis:   redisOk ? 'ok' : 'unavailable',
+    },
+  })
 })
 
 // ─── API Routes ───────────────────────────────────────────────────────────────

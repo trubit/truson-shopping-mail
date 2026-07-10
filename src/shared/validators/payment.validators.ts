@@ -14,6 +14,11 @@ export const paymentStatusSchema = z.object({
   paymentIntentId: z.string().min(1),
 })
 
-export type CreateOrderInput    = z.infer<typeof createOrderSchema>
-export type RefundInput         = z.infer<typeof refundSchema>
-export type PaymentStatusInput  = z.infer<typeof paymentStatusSchema>
+export const confirmPaymentSchema = z.object({
+  paymentIntentId: z.string().min(1, 'paymentIntentId is required'),
+})
+
+export type CreateOrderInput     = z.infer<typeof createOrderSchema>
+export type RefundInput          = z.infer<typeof refundSchema>
+export type PaymentStatusInput   = z.infer<typeof paymentStatusSchema>
+export type ConfirmPaymentInput  = z.infer<typeof confirmPaymentSchema>

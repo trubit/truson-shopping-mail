@@ -1,15 +1,28 @@
 import { NavLink, Outlet, Link }        from 'react-router-dom'
-import { FiGrid, FiUsers, FiPackage, FiShoppingBag } from 'react-icons/fi'
-import { useAdminStats }                from '../../../hooks/useAdmin.js'
+import {
+  FiGrid, FiUsers, FiPackage, FiShoppingBag,
+  FiBriefcase, FiBarChart2, FiFileText, FiSettings,
+} from 'react-icons/fi'
+import { useAdminStats, useAdminFraudAlerts } from '../../../hooks/useAdmin.js'
 import { useIsMobile }                  from '../../../hooks/useBreakpoint.js'
 import Logo                             from '../../../components/ui/Logo/index.js'
 
-const NAV = [
-  { to: '/admin',          end: true,  Icon: FiGrid,       label: 'Dashboard' },
-  { to: '/admin/users',    end: false, Icon: FiUsers,      label: 'Users'     },
-  { to: '/admin/products', end: false, Icon: FiPackage,    label: 'Products'  },
-  { to: '/admin/orders',   end: false, Icon: FiShoppingBag,label: 'Orders'    },
+const NAV_OVERVIEW = [
+  { to: '/admin',           end: true,  Icon: FiGrid,      label: 'Dashboard' },
+  { to: '/admin/analytics', end: false, Icon: FiBarChart2, label: 'Analytics' },
+  { to: '/admin/reports',   end: false, Icon: FiFileText,  label: 'Reports'   },
 ]
+const NAV_MANAGE = [
+  { to: '/admin/users',    end: false, Icon: FiUsers,       label: 'Users'    },
+  { to: '/admin/sellers',  end: false, Icon: FiBriefcase,   label: 'Sellers'  },
+  { to: '/admin/products', end: false, Icon: FiPackage,     label: 'Products' },
+  { to: '/admin/orders',   end: false, Icon: FiShoppingBag, label: 'Orders'   },
+]
+const NAV_SYSTEM = [
+  { to: '/admin/settings', end: false, Icon: FiSettings,      label: 'Settings'  },
+]
+
+const NAV_ALL = [...NAV_OVERVIEW, ...NAV_MANAGE, ...NAV_SYSTEM]
 
 // ─── inline style constants ─────────────────────────────────────────────────
 const SIDEBAR_BG  = '#131921'
@@ -20,8 +33,10 @@ const BORDER      = 'rgba(255,255,255,0.10)'
 const GROUP_COLOR = 'rgba(255,255,255,0.30)'
 
 export default function AdminLayout() {
-  const { data: statsRes } = useAdminStats()
-  const stats   = statsRes?.data
+  const { data: statsRes }  = useAdminStats()
+  const { data: fraudRes }  = useAdminFraudAlerts()
+  const stats    = statsRes?.data
+  const fraudCnt = fraudRes?.data?.total ?? 0
   const isMobile = useIsMobile(991)
 
   const getBadge = (label: string): number | null => {
@@ -29,6 +44,7 @@ export default function AdminLayout() {
     if (label === 'Users')    return stats.users.total
     if (label === 'Products') return stats.products.pending > 0 ? stats.products.pending : null
     if (label === 'Orders')   return stats.orders.total
+    if (label === 'Settings') return fraudCnt > 0 ? fraudCnt : null
     return null
   }
 
@@ -65,13 +81,22 @@ export default function AdminLayout() {
             <p style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GROUP_COLOR, padding: '0.75rem 1.25rem 0.25rem', margin: 0 }}>
               Overview
             </p>
-            <SidebarLink to="/admin" end Icon={FiGrid} label="Dashboard" badge={null} />
+            {NAV_OVERVIEW.map(({ to, end, Icon, label }) => (
+              <SidebarLink key={to} to={to} end={end} Icon={Icon} label={label} badge={getBadge(label)} />
+            ))}
 
             <p style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GROUP_COLOR, padding: '0.75rem 1.25rem 0.25rem', margin: 0 }}>
               Manage
             </p>
-            {NAV.slice(1).map(({ to, Icon, label }) => (
-              <SidebarLink key={to} to={to} Icon={Icon} label={label} badge={getBadge(label)} />
+            {NAV_MANAGE.map(({ to, end, Icon, label }) => (
+              <SidebarLink key={to} to={to} end={end} Icon={Icon} label={label} badge={getBadge(label)} />
+            ))}
+
+            <p style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GROUP_COLOR, padding: '0.75rem 1.25rem 0.25rem', margin: 0 }}>
+              System
+            </p>
+            {NAV_SYSTEM.map(({ to, end, Icon, label }) => (
+              <SidebarLink key={to} to={to} end={end} Icon={Icon} label={label} badge={getBadge(label)} />
             ))}
           </nav>
         </aside>
@@ -98,7 +123,7 @@ export default function AdminLayout() {
         borderBottom:    `2px solid ${BORDER}`,
         flexShrink:      0,
       }}>
-        {NAV.map(({ to, end, Icon, label }) => (
+        {NAV_ALL.map(({ to, end, Icon, label }) => (
           <NavLink
             key={to}
             to={to}
@@ -118,10 +143,16 @@ export default function AdminLayout() {
               borderBottom:   isActive ? `3px solid ${ACCENT}` : '3px solid transparent',
               minWidth:       '64px',
               flexShrink:     0,
+              position:       'relative',
             })}
           >
             <Icon size={18} />
             <span>{label}</span>
+            {getBadge(label) !== null && (
+              <span style={{ position:'absolute', top:4, right:4, background:'#dc2626', color:'#fff', fontSize:'.5rem', fontWeight:700, padding:'1px 4px', borderRadius:999, lineHeight:1.4 }}>
+                {getBadge(label)}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

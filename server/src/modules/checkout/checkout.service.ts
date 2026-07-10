@@ -133,17 +133,33 @@ export const applyCoupon = async (
 ): Promise<ICheckoutDocument> => {
   const session = await getActiveSession(userId)
 
+  // ── Step 1: read-only validation (expiry, minOrderAmount) ─────────────────
   const coupon = await Coupon.findOne({ code: input.code, isActive: true })
   if (!coupon) throw new AppError('Coupon not found or inactive', 404)
 
   const now = new Date()
   if (coupon.expiresAt && coupon.expiresAt < now) throw new AppError('Coupon has expired', 400)
-  if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses)
-    throw new AppError('Coupon usage limit reached', 400)
 
   const subtotal = session.items.reduce((s, i) => s + i.lineTotal, 0)
   if (subtotal < coupon.minOrderAmount)
     throw new AppError(`Minimum order amount for this coupon is $${coupon.minOrderAmount.toFixed(2)}`, 400)
+
+  // ── Step 2: atomically claim one usage slot ────────────────────────────────
+  // Without atomicity, two concurrent requests can both pass the usedCount check
+  // and both apply the coupon — exceeding maxUses. The $or filter ensures the
+  // increment only succeeds when there is still capacity (or no limit).
+  if (coupon.maxUses !== null) {
+    const claimed = await Coupon.findOneAndUpdate(
+      {
+        _id:      coupon._id,
+        isActive: true,
+        usedCount: { $lt: coupon.maxUses },
+      },
+      { $inc: { usedCount: 1 } },
+    )
+    if (!claimed) throw new AppError('Coupon usage limit reached', 400)
+  }
+  // maxUses === null means unlimited — no slot to claim
 
   let discount = coupon.type === 'percentage'
     ? r2(subtotal * coupon.value / 100)

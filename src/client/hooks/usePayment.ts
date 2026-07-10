@@ -7,10 +7,9 @@ import { useCheckoutStore } from '../store/checkoutStore.js'
 import type { IRefundRequest } from '../../shared/types/index.js'
 
 import { ORDER_KEY } from './useOrders.js'
-// Re-export from useOrders for backward compat
 export { useMyOrders, useOrder, ORDER_KEY } from './useOrders.js'
 
-export const PAYMENT_KEY  = (id: string) => ['payment', 'status', id] as const
+export const PAYMENT_KEY = (id: string) => ['payment', 'status', id] as const
 
 // Create order + initialize Stripe PaymentIntent
 export const useCreateOrder = () => {
@@ -42,6 +41,46 @@ export const usePaymentStatus = (paymentIntentId: string | null) =>
     },
     staleTime: 0,
   })
+
+// Available payment providers
+export const usePaymentProviders = () =>
+  useQuery({
+    queryKey: ['payment', 'providers'],
+    queryFn:  () => paymentService.getProviders(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+// Initialize Paystack transaction
+export const usePaystackInitialize = () => {
+  const setStep = usePaymentStore((s) => s.setStep)
+  const setError = usePaymentStore((s) => s.setError)
+
+  return useMutation({
+    mutationFn: ({ orderId, email }: { orderId: string; email: string }) =>
+      paymentService.paystackInitialize(orderId, email),
+    onMutate:  () => { setStep('processing') },
+    onError:   (err: Error) => { setError(err.message); setStep('failed') },
+  })
+}
+
+// Verify Paystack transaction after popup closes
+export const usePaystackVerify = () => {
+  const navigate = useNavigate()
+  const setStep  = usePaymentStore((s) => s.setStep)
+  const setError = usePaymentStore((s) => s.setError)
+  const qc       = useQueryClient()
+
+  return useMutation({
+    mutationFn: (reference: string) => paymentService.paystackVerify(reference),
+    onMutate:   () => { setStep('processing') },
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ORDER_KEY })
+      const orderId = usePaymentStore.getState().orderId
+      navigate(orderId ? `/payment/success?orderId=${orderId}` : '/payment/success')
+    },
+    onError: (err: Error) => { setError(err.message); setStep('failed') },
+  })
+}
 
 // Request a refund
 export const useRefundPayment = () => {

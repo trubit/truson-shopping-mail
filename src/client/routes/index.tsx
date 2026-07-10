@@ -23,10 +23,11 @@ const OrdersPage      = lazy(() => import('../pages/orders/OrdersPage.js'))
 const NotFoundPage    = lazy(() => import('../pages/NotFoundPage.js'))
 
 // Payment pages
-const PaymentPage     = lazy(() => import('../pages/payment/PaymentPage/index.js'))
-const PaymentComplete = lazy(() => import('../pages/payment/PaymentComplete/index.js'))
-const PaymentSuccess  = lazy(() => import('../pages/payment/PaymentSuccess/index.js'))
-const PaymentFailed   = lazy(() => import('../pages/payment/PaymentFailed/index.js'))
+const PaymentPage         = lazy(() => import('../pages/payment/PaymentPage/index.js'))
+const PaymentComplete     = lazy(() => import('../pages/payment/PaymentComplete/index.js'))
+const PaymentSuccess      = lazy(() => import('../pages/payment/PaymentSuccess/index.js'))
+const PaymentFailed       = lazy(() => import('../pages/payment/PaymentFailed/index.js'))
+const PaystackCallback    = lazy(() => import('../pages/payment/PaystackCallback/index.js'))
 
 // Profile pages (nested layout)
 const ProfileLayout = lazy(() => import('../pages/profile/ProfileLayout/index.js'))
@@ -65,8 +66,12 @@ const SecurityPage        = lazy(() => import('../pages/dashboard/SecurityPage/i
 const AdminLayout    = lazy(() => import('../pages/admin/AdminLayout/index.js'))
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard/index.js'))
 const AdminUsers     = lazy(() => import('../pages/admin/AdminUsers/index.js'))
+const AdminSellers   = lazy(() => import('../pages/admin/AdminSellers/index.js'))
 const AdminProducts  = lazy(() => import('../pages/admin/AdminProducts/index.js'))
 const AdminOrders    = lazy(() => import('../pages/admin/AdminOrders/index.js'))
+const AdminAnalytics = lazy(() => import('../pages/admin/AdminAnalytics/index.js'))
+const AdminReports   = lazy(() => import('../pages/admin/AdminReports/index.js'))
+const AdminSettings  = lazy(() => import('../pages/admin/AdminSettings/index.js'))
 
 const SuspenseWrap = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingSpinner fullscreen />}>{children}</Suspense>
@@ -115,10 +120,11 @@ export default function AppRouter() {
           <Route path="/orders/:id/return"     element={<PrivateRoute><ReturnOrder /></PrivateRoute>} />
 
           {/* Payment — PrivateRoute except /payment/complete which handles Stripe redirect */}
-          <Route path="/payment/:orderId"   element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
-          <Route path="/payment/complete"   element={<PaymentComplete />} />
-          <Route path="/payment/success"    element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
-          <Route path="/payment/failed"     element={<PrivateRoute><PaymentFailed /></PrivateRoute>} />
+          <Route path="/payment/:orderId"            element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
+          <Route path="/payment/complete"            element={<PaymentComplete />} />
+          <Route path="/payment/success"             element={<PrivateRoute><PaymentSuccess /></PrivateRoute>} />
+          <Route path="/payment/failed"              element={<PrivateRoute><PaymentFailed /></PrivateRoute>} />
+          <Route path="/payment/paystack-callback"   element={<PrivateRoute><PaystackCallback /></PrivateRoute>} />
 
           {/* Seller dashboard — nested layout */}
           <Route path="/seller" element={<SellerRoute><SellerLayout /></SellerRoute>}>
@@ -137,8 +143,12 @@ export default function AppRouter() {
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index              element={<AdminDashboard />} />
             <Route path="users"       element={<AdminUsers />} />
+            <Route path="sellers"     element={<AdminSellers />} />
             <Route path="products"    element={<AdminProducts />} />
             <Route path="orders"      element={<AdminOrders />} />
+            <Route path="analytics"   element={<AdminAnalytics />} />
+            <Route path="reports"     element={<AdminReports />} />
+            <Route path="settings"    element={<AdminSettings />} />
           </Route>
 
           {/* User Dashboard — nested layout */}

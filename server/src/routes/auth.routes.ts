@@ -20,8 +20,8 @@ router.post('/reset-password',       authLimiter, validate(resetPasswordSchema),
 router.post('/resend-verification',  authLimiter,                                 authController.resendVerification)
 router.get('/verify-email',                                                        authController.verifyEmail)
 
-// Token refresh (requires valid refresh cookie)
-router.post('/refresh', authController.refresh)
+// Token refresh (requires valid refresh cookie) — rate-limited to block token-refresh brute-force
+router.post('/refresh', authLimiter, authController.refresh)
 
 // Protected routes
 router.post('/logout', authenticate, authController.logout)

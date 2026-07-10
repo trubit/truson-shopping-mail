@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as authService from './auth.service.js'
 import { sendSuccess, sendCreated } from '../../utils/response.js'
+import { AppError } from '../../middlewares/error.middleware.js'
 import { env } from '../../config/env.js'
 
 const REFRESH_COOKIE_OPTIONS = {
@@ -52,7 +53,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
   try {
     const refreshToken = req.cookies?.refresh_token as string | undefined
     if (!refreshToken) {
-      return next(Object.assign(new Error('No refresh token'), { statusCode: 401 }))
+      return next(new AppError('No refresh token', 401))
     }
 
     const { user, tokens } = await authService.refreshTokens(refreshToken)

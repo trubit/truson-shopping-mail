@@ -1,16 +1,42 @@
 import mongoose from 'mongoose'
 import { Product, type IProductDocument } from './product.model.js'
 import { AppError } from '../../middlewares/error.middleware.js'
+import { cacheGet, cacheSet, cacheDelPattern, cacheIncr } from '../../utils/cache.js'
 import type { CreateProductInput, UpdateProductInput, ProductFiltersInput } from '../../../../src/shared/validators/product.validators.js'
 import type { PaginationMeta } from '../../../../src/shared/types/api.types.js'
+
+// Escape all PCRE metacharacters before embedding user input in a RegExp.
+// Without this, a crafted brand string like `(a+)+b` causes catastrophic
+// backtracking in MongoDB's regex engine — a classic ReDoS attack.
+const escRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Stable cache key: sort filter keys so that identical queries with different
+// parameter ordering produce the same key (avoids redundant DB hits).
+const filterCacheKey = (prefix: string, filters: object): string => {
+  const sorted = Object.fromEntries(
+    Object.entries(filters as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  )
+  return `${prefix}:${JSON.stringify(sorted)}`
+}
+
+// ─── Cache TTLs ───────────────────────────────────────────────────────────────
+const TTL = {
+  PRODUCT_DETAIL:   120,     // 2 min — individual product page
+  PRODUCT_LIST:      30,     // 30 s  — paginated listing (changes often)
+  FEATURED:         300,     // 5 min — featured products (rarely changes)
+}
+
+const VIEWS_FLUSH_INTERVAL_MS = 60_000 // flush buffered view counts every 60 s
 
 // ─── Build Mongo filter from query params ─────────────────────────────────────
 const buildFilter = (filters: ProductFiltersInput, extra: Record<string, unknown> = {}) => {
   const q: Record<string, unknown> = { ...extra }
 
   if (filters.category)              q.category = filters.category
-  if (filters.brand)                 q.brand = new RegExp(filters.brand, 'i')
-  if (filters.search)                q.$text = { $search: filters.search }
+  if (filters.brand)                 q.brand    = new RegExp(escRegex(filters.brand), 'i')
+  if (filters.search)                q.$text    = { $search: filters.search }
   if (filters.inStock === true)      q.stockQuantity = { $gt: 0 }
   if (filters.isFeatured === true)   q.isFeatured = true
   if (filters.sellerId)              q.sellerId = new mongoose.Types.ObjectId(filters.sellerId)
@@ -54,6 +80,10 @@ export const getProducts = async (filters: ProductFiltersInput) => {
   const limit = filters.limit ?? 20
   const skip  = (page - 1) * limit
 
+  const cacheKey = filterCacheKey('products:list', filters)
+  const cached   = await cacheGet<{ products: unknown[]; pagination: PaginationMeta }>(cacheKey)
+  if (cached) return cached
+
   const filter = buildFilter(filters, { status: 'active', isActive: true })
   const sort   = buildSort(filters.sort)
 
@@ -67,21 +97,77 @@ export const getProducts = async (filters: ProductFiltersInput) => {
     Product.countDocuments(filter),
   ])
 
-  return { products, pagination: paginate(page, limit, total) }
+  const result = { products, pagination: paginate(page, limit, total) }
+  await cacheSet(cacheKey, result, TTL.PRODUCT_LIST)
+  return result
 }
 
 // ─── Public: Get single product ───────────────────────────────────────────────
 export const getProductById = async (id: string): Promise<IProductDocument> => {
   if (!mongoose.isValidObjectId(id)) throw new AppError('Invalid product ID', 400)
 
-  const product = await Product.findOneAndUpdate(
+  // Serve from cache if available
+  const cacheKey = `products:detail:${id}`
+  const cached   = await cacheGet<IProductDocument>(cacheKey)
+  if (cached) {
+    // Increment the view counter in Redis asynchronously — no DB write per request.
+    // A background flush job writes the accumulated count to MongoDB every minute.
+    void cacheIncr(`views:product:${id}`, VIEWS_FLUSH_INTERVAL_MS / 1000 + 120)
+    return cached
+  }
+
+  const product = await Product.findOne(
     { _id: id, status: 'active', isActive: true },
-    { $inc: { views: 1 } },
-    { new: true },
   ).populate('sellerId', 'firstName lastName username profileImage')
 
   if (!product) throw new AppError('Product not found', 404)
+
+  // Increment view counter in Redis (non-blocking, batched)
+  void cacheIncr(`views:product:${id}`, VIEWS_FLUSH_INTERVAL_MS / 1000 + 120)
+
+  await cacheSet(cacheKey, product.toObject({ virtuals: true }), TTL.PRODUCT_DETAIL)
   return product
+}
+
+// ─── Background job: flush Redis view counters → MongoDB ─────────────────────
+// Called from server startup on an interval (see index.ts).
+export const flushViewCounters = async (): Promise<void> => {
+  try {
+    const { redis } = await import('../../database/redis.js')
+    let cursor = '0'
+    const updates: Array<{ id: string; count: number }> = []
+
+    do {
+      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', 'views:product:*', 'COUNT', 100)
+      cursor = nextCursor
+      for (const key of keys) {
+        const raw = await redis.getdel(key)
+        if (raw) {
+          const count = parseInt(raw, 10)
+          const id    = key.replace('views:product:', '')
+          if (count > 0) updates.push({ id, count })
+        }
+      }
+    } while (cursor !== '0')
+
+    if (updates.length === 0) return
+
+    const bulkOps = updates.map(({ id, count }) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $inc: { views: count } },
+      },
+    }))
+    await Product.bulkWrite(bulkOps, { ordered: false })
+  } catch {
+    // Non-fatal — view counts will be retried next interval
+  }
+}
+
+// ─── Cache invalidation helpers ───────────────────────────────────────────────
+export const invalidateProductCache = async (productId?: string): Promise<void> => {
+  await cacheDelPattern('products:list:*')
+  if (productId) await cacheDelPattern(`products:detail:${productId}`)
 }
 
 // ─── Public: Search products ──────────────────────────────────────────────────
@@ -120,6 +206,7 @@ export const createProduct = async (
     isActive:      true,
   })
 
+  await invalidateProductCache()
   return product
 }
 
@@ -157,6 +244,7 @@ export const updateProduct = async (
   })
 
   await product.save()
+  await invalidateProductCache(id)
   return product
 }
 
@@ -167,6 +255,8 @@ export const deleteProduct = async (id: string, sellerId: string, isAdmin = fals
   const filter = isAdmin ? { _id: id } : { _id: id, sellerId: new mongoose.Types.ObjectId(sellerId) }
   const product = await Product.findOneAndUpdate(filter, { isActive: false, status: 'blocked' })
   if (!product) throw new AppError('Product not found or access denied', 404)
+
+  await invalidateProductCache(id)
 }
 
 // ─── Admin: Approve product ───────────────────────────────────────────────────
@@ -179,6 +269,7 @@ export const approveProduct = async (id: string): Promise<IProductDocument> => {
     { new: true, returnDocument: 'after' },
   )
   if (!product) throw new AppError('Product not found', 404)
+  await invalidateProductCache(id)
   return product
 }
 
@@ -192,6 +283,7 @@ export const blockProduct = async (id: string): Promise<IProductDocument> => {
     { new: true, returnDocument: 'after' },
   )
   if (!product) throw new AppError('Product not found', 404)
+  await invalidateProductCache(id)
   return product
 }
 
@@ -218,9 +310,16 @@ export const getSellerProducts = async (sellerId: string, filters: ProductFilter
 
 // ─── Get featured products ────────────────────────────────────────────────────
 export const getFeaturedProducts = async (limit = 12) => {
-  return Product.find({ status: 'active', isActive: true, isFeatured: true })
+  const cacheKey = `products:featured:${limit}`
+  const cached   = await cacheGet<IProductDocument[]>(cacheKey)
+  if (cached) return cached
+
+  const products = await Product.find({ status: 'active', isActive: true, isFeatured: true })
     .sort({ createdAt: -1 })
     .limit(limit)
     .populate('sellerId', 'firstName lastName username')
     .lean({ virtuals: true })
+
+  await cacheSet(cacheKey, products, TTL.FEATURED)
+  return products
 }

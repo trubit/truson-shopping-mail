@@ -6,6 +6,7 @@ import { Product }  from '../product/product.model.js'
 import { AppError } from '../../middlewares/error.middleware.js'
 import { emitToUser } from '../../sockets/index.js'
 import { createNotification } from '../notification/notification.model.js'
+import { cacheSetAdd } from '../../utils/cache.js'
 import { env }      from '../../config/env.js'
 import { logger }   from '../../utils/logger.js'
 import type { RefundInput } from '../../../../src/shared/validators/payment.validators.js'
@@ -38,6 +39,14 @@ export const handleWebhook = async (rawBody: Buffer, signature: string): Promise
   }
 
   logger.info('Stripe webhook received', { type: event.type, id: event.id })
+
+  // Idempotency: Stripe delivers events at-least-once; deduplicate using event ID.
+  // Store the event ID in Redis for 48 h (longer than Stripe's max retry window).
+  const alreadyProcessed = await cacheSetAdd('stripe:events', event.id, 48 * 60 * 60)
+  if (alreadyProcessed) {
+    logger.info('Stripe webhook duplicate — skipping', { id: event.id })
+    return
+  }
 
   switch (event.type) {
     case 'payment_intent.succeeded': {
@@ -73,8 +82,10 @@ const onPaymentSucceeded = async (intent: Stripe.PaymentIntent) => {
     },
   )
 
+  // Guard: if client /payment/confirm already ran first (set paymentStatus='paid'),
+  // skip the update entirely — prevents double stock deduction and duplicate tracking events.
   const order = await Order.findOneAndUpdate(
-    { paymentIntentId: intent.id },
+    { paymentIntentId: intent.id, paymentStatus: { $ne: 'paid' } },
     {
       $set:  { paymentStatus: 'paid', orderStatus: 'confirmed' },
       $push: {
@@ -114,9 +125,22 @@ const onPaymentSucceeded = async (intent: Stripe.PaymentIntent) => {
       },
     }))
     try {
-      await Product.bulkWrite(bulkOps, { ordered: false })
+      const result = await Product.bulkWrite(bulkOps, { ordered: false })
+      if (result.modifiedCount < order.items.length) {
+        // Some items may have been out-of-stock at payment time — log for ops review.
+        logger.error('Inventory reduction incomplete — possible oversell', {
+          orderId:       order._id,
+          expected:      order.items.length,
+          modified:      result.modifiedCount,
+          paymentIntent: order.paymentIntentId,
+        })
+      }
     } catch (err) {
-      logger.warn('Inventory reduction partially failed', { orderId: order._id, err })
+      logger.error('Inventory reduction failed — manual reconciliation required', {
+        orderId:       order._id,
+        paymentIntent: order.paymentIntentId,
+        err,
+      })
     }
   }
 
@@ -217,56 +241,73 @@ export const confirmPayment = async (paymentIntentId: string, userId: string) =>
 
   const transactionId = typeof intent.latest_charge === 'string' ? intent.latest_charge : undefined
 
-  await Payment.findOneAndUpdate(
-    { paymentIntentId },
-    { status: 'completed', transactionId, stripeEventData: intent },
-  )
-
-  const updated = await Order.findOneAndUpdate(
-    { paymentIntentId, userId },
-    {
-      $set: { paymentStatus: 'paid', orderStatus: 'confirmed' },
-      $push: {
-        'tracking.events': {
-          status:      'confirmed',
-          description: 'Payment confirmed — order is being processed',
-          timestamp:   new Date(),
+  // Run Payment record update and Order update in parallel — no data dependency between them.
+  // Order filter includes paymentStatus guard so webhook racing this call cannot double-apply.
+  const [, updated] = await Promise.all([
+    Payment.findOneAndUpdate(
+      { paymentIntentId },
+      { status: 'completed', transactionId, stripeEventData: intent },
+    ),
+    Order.findOneAndUpdate(
+      { paymentIntentId, userId, paymentStatus: { $ne: 'paid' } },
+      {
+        $set: { paymentStatus: 'paid', orderStatus: 'confirmed' },
+        $push: {
+          'tracking.events': {
+            status:      'confirmed',
+            description: 'Payment confirmed — order is being processed',
+            timestamp:   new Date(),
+          },
         },
       },
-    },
-    { returnDocument: 'after' },
-  )
+      { returnDocument: 'after' },
+    ),
+  ])
 
-  if (updated) {
-    const uid  = updated.userId.toString()
-    const notif = await createNotification({
-      userId:  uid,
-      type:    'order',
-      title:   'Order confirmed',
-      message: `Your payment for order #${updated.orderNumber} was successful. We are now processing your order.`,
-      link:    `/orders/${updated._id}`,
-    }).catch(() => null)
-    if (notif) emitToUser(uid, 'notification:new', notif)
-    emitToUser(uid, 'order:updated', {
-      orderId:       updated._id,
-      orderStatus:   'confirmed',
-      paymentStatus: 'paid',
-    })
+  // If updated is null the webhook already confirmed this order between our guard check
+  // and the update — return the current order state (already paid, nothing to do).
+  if (!updated) {
+    const current = await Order.findOne({ paymentIntentId, userId })
+    return current ?? order
   }
 
-  if (updated && updated.items.length > 0) {
+  const uid  = updated.userId.toString()
+  const notif = await createNotification({
+    userId:  uid,
+    type:    'order',
+    title:   'Order confirmed',
+    message: `Your payment for order #${updated.orderNumber} was successful. We are now processing your order.`,
+    link:    `/orders/${updated._id}`,
+  }).catch(() => null)
+  if (notif) emitToUser(uid, 'notification:new', notif)
+  emitToUser(uid, 'order:updated', {
+    orderId:       updated._id,
+    orderStatus:   'confirmed',
+    paymentStatus: 'paid',
+  })
+
+  if (updated.items.length > 0) {
     const bulkOps = updated.items.map((item) => ({
       updateOne: {
         filter: { _id: item.productId, stockQuantity: { $gte: item.quantity } },
         update: { $inc: { stockQuantity: -item.quantity } },
       },
     }))
-    await Product.bulkWrite(bulkOps, { ordered: false }).catch((err) =>
-      logger.warn('Stock reduction partially failed on confirm', { orderId: updated._id, err }),
-    )
+    try {
+      const result = await Product.bulkWrite(bulkOps, { ordered: false })
+      if (result.modifiedCount < updated.items.length) {
+        logger.error('Inventory reduction incomplete on confirm — possible oversell', {
+          orderId: updated._id, expected: updated.items.length, modified: result.modifiedCount,
+        })
+      }
+    } catch (err) {
+      logger.error('Inventory reduction failed on confirm — manual reconciliation required', {
+        orderId: updated._id, err,
+      })
+    }
   }
 
-  logger.info('Payment confirmed via client endpoint', { paymentIntentId, orderId: updated?._id })
+  logger.info('Payment confirmed via client endpoint', { paymentIntentId, orderId: updated._id })
   return updated
 }
 
@@ -284,16 +325,21 @@ export const refundPayment = async (input: RefundInput, userId: string) => {
 
   const amountCents = Math.round(order.grandTotal * 100)
 
-  const refund = await getStripe().refunds.create({
-    payment_intent: order.paymentIntentId,
-    amount:         amountCents,
-    reason:         'requested_by_customer',
-    metadata: {
-      orderId:   order._id.toString(),
-      userId:    userId.toString(),
-      reason:    input.reason ?? '',
+  // idempotencyKey (second arg) prevents duplicate refunds on network retry
+  // or concurrent charge.refunded webhook delivery.
+  const refund = await getStripe().refunds.create(
+    {
+      payment_intent: order.paymentIntentId,
+      amount:         amountCents,
+      reason:         'requested_by_customer',
+      metadata: {
+        orderId: order._id.toString(),
+        userId:  userId.toString(),
+        reason:  input.reason ?? '',
+      },
     },
-  })
+    { idempotencyKey: `refund-${order._id.toString()}` },
+  )
 
   // Status updates handled by webhook (charge.refunded), but also update optimistically
   await Payment.findOneAndUpdate(

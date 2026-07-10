@@ -1,15 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminService } from '../services/adminService.js'
 import type { OrderStatus } from '../../shared/types/order.types.js'
-import type { UserRole } from '../../shared/types/auth.types.js'
+import type { UserRole }    from '../../shared/types/auth.types.js'
 
 const KEYS = {
-  stats:    ['admin', 'stats']    as const,
-  users:    (p: Record<string, string>) => ['admin', 'users',    p] as const,
-  products: (p: Record<string, string>) => ['admin', 'products', p] as const,
-  orders:   (p: Record<string, string>) => ['admin', 'orders',   p] as const,
+  stats:       ['admin', 'stats']                                        as const,
+  users:       (p: Record<string, string>) => ['admin', 'users',    p]  as const,
+  sellers:     (p: Record<string, string>) => ['admin', 'sellers',  p]  as const,
+  products:    (p: Record<string, string>) => ['admin', 'products', p]  as const,
+  orders:      (p: Record<string, string>) => ['admin', 'orders',   p]  as const,
+  payments:    (p: Record<string, string>) => ['admin', 'payments', p]  as const,
+  analytics:   (days: number)              => ['admin', 'analytics', days] as const,
+  fraudAlerts: ['admin', 'fraud-alerts']                                 as const,
+  reports:     (period: string)            => ['admin', 'reports', period] as const,
+  auditLogs:   (p: Record<string, string>) => ['admin', 'audit-logs', p] as const,
 }
 
+// ── Stats
 export const useAdminStats = () =>
   useQuery({
     queryKey: KEYS.stats,
@@ -17,6 +24,7 @@ export const useAdminStats = () =>
     staleTime: 60_000,
   })
 
+// ── Users
 export const useAdminUsers = (params: Record<string, string> = {}) =>
   useQuery({
     queryKey: KEYS.users(params),
@@ -28,7 +36,7 @@ export const useToggleUserActive = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => adminService.toggleUserActive(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }) },
   })
 }
 
@@ -36,10 +44,41 @@ export const useChangeUserRole = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: UserRole }) => adminService.changeUserRole(id, role),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }) },
   })
 }
 
+export const useDeleteUser = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteUser(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+// ── Sellers
+export const useAdminSellers = (params: Record<string, string> = {}) =>
+  useQuery({
+    queryKey: KEYS.sellers(params),
+    queryFn:  () => adminService.getSellers(params),
+    staleTime: 30_000,
+  })
+
+export const useVerifySeller = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminService.verifySeller(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'sellers'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+// ── Products
 export const useAdminProducts = (params: Record<string, string> = {}) =>
   useQuery({
     queryKey: KEYS.products(params),
@@ -69,6 +108,7 @@ export const useBlockProduct = () => {
   })
 }
 
+// ── Orders
 export const useAdminOrders = (params: Record<string, string> = {}) =>
   useQuery({
     queryKey: KEYS.orders(params),
@@ -87,3 +127,44 @@ export const useUpdateOrderStatus = () => {
     },
   })
 }
+
+// ── Payments
+export const useAdminPayments = (params: Record<string, string> = {}) =>
+  useQuery({
+    queryKey: KEYS.payments(params),
+    queryFn:  () => adminService.getPayments(params),
+    staleTime: 30_000,
+  })
+
+// ── Analytics
+export const useAdminAnalytics = (days = 30) =>
+  useQuery({
+    queryKey:  KEYS.analytics(days),
+    queryFn:   () => adminService.getAnalytics(days),
+    staleTime: 5 * 60_000,
+  })
+
+// ── Fraud alerts
+export const useAdminFraudAlerts = () =>
+  useQuery({
+    queryKey:  KEYS.fraudAlerts,
+    queryFn:   adminService.getFraudAlerts,
+    staleTime: 2 * 60_000,
+    refetchInterval: 5 * 60_000,
+  })
+
+// ── Reports
+export const useAdminReports = (period = 'month') =>
+  useQuery({
+    queryKey:  KEYS.reports(period),
+    queryFn:   () => adminService.getReports(period),
+    staleTime: 10 * 60_000,
+  })
+
+// ── Audit logs
+export const useAdminAuditLogs = (params: Record<string, string> = {}) =>
+  useQuery({
+    queryKey: KEYS.auditLogs(params),
+    queryFn:  () => adminService.getAuditLogs(params),
+    staleTime: 30_000,
+  })
