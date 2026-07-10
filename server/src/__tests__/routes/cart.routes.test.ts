@@ -2,32 +2,44 @@ import { describe, it, expect, vi, beforeAll } from 'vitest'
 import request from 'supertest'
 import mongoose from 'mongoose'
 
-vi.mock('ioredis', () => ({
-  default: vi.fn(() => ({
-    get: vi.fn().mockResolvedValue(null),
-    set: vi.fn().mockResolvedValue('OK'),
-    setex: vi.fn().mockResolvedValue('OK'),
-    del: vi.fn().mockResolvedValue(1),
-    exists: vi.fn().mockResolvedValue(0),
-    expire: vi.fn().mockResolvedValue(1),
-    quit: vi.fn().mockResolvedValue('OK'),
-    on: vi.fn(),
-    disconnect: vi.fn(),
-    status: 'ready',
-  })),
-}))
+vi.mock('ioredis', () => {
+  class Redis {
+    get        = vi.fn().mockResolvedValue(null)
+    set        = vi.fn().mockResolvedValue('OK')
+    setex      = vi.fn().mockResolvedValue('OK')
+    del        = vi.fn().mockResolvedValue(1)
+    exists     = vi.fn().mockResolvedValue(0)
+    expire     = vi.fn().mockResolvedValue(1)
+    sadd       = vi.fn().mockResolvedValue(0)
+    scan       = vi.fn().mockResolvedValue(['0', []])
+    incr       = vi.fn().mockResolvedValue(1)
+    call       = vi.fn().mockResolvedValue(null)
+    connect    = vi.fn().mockResolvedValue(undefined)
+    quit       = vi.fn().mockResolvedValue('OK')
+    on         = vi.fn()
+    disconnect = vi.fn()
+    status     = 'ready'
+  }
+  return { default: Redis, Redis }
+})
 
 vi.mock('../../utils/email.js', () => ({
   sendVerificationEmail:  vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('../../middlewares/rateLimiter.middleware.js', () => ({
-  globalLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  authLimiter:   (_req: unknown, _res: unknown, next: () => void) => next(),
-  checkoutLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  paymentLimiter:  (_req: unknown, _res: unknown, next: () => void) => next(),
-}))
+vi.mock('../../middlewares/rateLimiter.middleware.js', () => {
+  const pass = (_req: unknown, _res: unknown, next: () => void) => next()
+  return {
+    globalLimiter:    pass,
+    authLimiter:      pass,
+    searchLimiter:    pass,
+    uploadLimiter:    pass,
+    dashboardLimiter: pass,
+    checkoutLimiter:  pass,
+    paymentLimiter:   pass,
+  }
+})
 
 import app from '../../app.js'
 import { User as UserModel } from '../../modules/user/user.model.js'
